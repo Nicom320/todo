@@ -82,7 +82,207 @@
              max(16px, env(safe-area-inset-left));
     -webkit-tap-highlight-color: transparent;
   }
-  main { width: 100%; max-width: 600px; }
+  .app { width: 100%; max-width: 600px; }
+  main { width: 100%; }
+  /* Kopfzeile mit Seitenmenü links */
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; min-height: 40px; }
+  .topbar .head-right { margin-top: 0; }
+  .nav-wrap { position: relative; }
+  .navbtn {
+    display: flex; align-items: center; gap: 8px;
+    height: 36px; padding: 0 14px 0 10px;
+    border: none; border-radius: 999px;
+    background: var(--chip); color: var(--text);
+    font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    transition: transform .15s;
+  }
+  .navbtn svg { width: 17px; height: 17px; color: var(--accent); }
+  .navbtn:active { transform: scale(.95); }
+  body.at-home .navbtn { visibility: hidden; }
+  .navmenu {
+    position: absolute; top: calc(100% + 8px); left: 0; z-index: 45;
+    min-width: 190px; padding: 6px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .18);
+    transform-origin: top left;
+  }
+  .navmenu[hidden] { display: none; }
+  .navmenu button {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 11px 12px; border: none; border-radius: 10px;
+    background: transparent; color: var(--text);
+    font: inherit; font-size: 0.95rem; text-align: left; cursor: pointer;
+  }
+  .navmenu button i { font-style: normal; width: 22px; text-align: center; }
+  .navmenu button:hover { background: var(--chip); }
+  .navmenu button.current { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  /* Startseite */
+  .home {
+    min-height: calc(100vh - 250px); min-height: calc(100dvh - 250px);
+    display: flex; flex-direction: column; justify-content: center; text-align: center;
+    padding-bottom: 40px;
+  }
+  .home-date { margin: 0 0 6px; color: var(--muted); font-size: 0.95rem; }
+  .home-hello { font-size: 2.4rem; margin: 0; }
+  .home-sub { margin: 6px 0 30px; color: var(--muted); }
+  .home-cards { display: grid; gap: 14px; }
+  .home-card {
+    position: relative; overflow: hidden;
+    display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto;
+    column-gap: 16px; align-items: center; text-align: left;
+    padding: 22px 22px; border: 1px solid var(--line); border-radius: 22px;
+    background: var(--card); color: var(--text); font: inherit; cursor: pointer;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, .06);
+    transition: transform .18s, box-shadow .18s;
+  }
+  .home-card::before {
+    content: ""; position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(120% 140% at 0% 0%, var(--accent-soft), transparent 60%);
+    opacity: .9;
+  }
+  .home-card > * { position: relative; z-index: 1; }
+  .home-card:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0, 0, 0, .1); }
+  .home-card:active { transform: scale(.97); }
+  .home-icon {
+    grid-row: 1 / 3; width: 58px; height: 58px; border-radius: 18px;
+    display: grid; place-items: center; font-size: 1.8rem;
+    background: var(--accent-soft);
+  }
+  .home-title { font-size: 1.35rem; font-weight: 700; }
+  .home-info { grid-column: 2; color: var(--muted); font-size: 0.9rem; }
+  .home-arrow { grid-column: 3; grid-row: 1 / 3; font-size: 1.4rem; color: var(--accent); transition: transform .2s; }
+  .home-card:hover .home-arrow { transform: translateX(4px); }
+  /* Einkauf */
+  .tab-count {
+    display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 4px;
+    border-radius: 999px; background: var(--accent); color: #fff; font-size: 0.7rem; font-weight: 700;
+  }
+  .tab-count[hidden] { display: none; }
+  .ichip {
+    flex-shrink: 0; font-size: 0.8rem; padding: 5px 10px; border-radius: 999px;
+    background: var(--chip); color: var(--muted); cursor: pointer; white-space: nowrap; user-select: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .ichip.none { background: transparent; border: 1px dashed var(--line); padding: 4px 9px; }
+  .ichip.none:hover { color: var(--accent); border-color: var(--accent); }
+  .ichip.priced { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .checkout {
+    margin-top: 14px; padding: 18px 18px 16px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  }
+  .checkout[hidden] { display: none; }
+  .sum-line { display: flex; justify-content: space-between; font-size: 0.95rem; color: var(--muted); padding: 2px 0 6px; font-variant-numeric: tabular-nums; }
+  .pfand-row {
+    display: flex; align-items: center; gap: 8px; padding: 7px 0;
+    font-size: 0.95rem; color: var(--done); font-variant-numeric: tabular-nums;
+  }
+  .pfand-row span:first-child { flex: 1; }
+  .pfand-row strong { font-weight: 600; }
+  .pfand-row button { border: none; background: transparent; color: var(--muted); font-size: 1.1rem; cursor: pointer; width: 28px; height: 28px; border-radius: 8px; }
+  .pfand-row button:hover { background: var(--chip); color: var(--text); }
+  .add-pfand {
+    display: inline-flex; align-items: center; gap: 4px; margin: 4px 0 10px;
+    padding: 6px 12px; border: 1px dashed var(--line); border-radius: 999px;
+    background: transparent; color: var(--muted); font: inherit; font-size: 0.85rem; cursor: pointer;
+  }
+  .add-pfand:hover { color: var(--done); border-color: var(--done); }
+  .add-pfand[hidden] { display: none; }
+  .pfand-form { display: flex; gap: 8px; margin: 4px 0 12px; }
+  .pfand-form[hidden] { display: none; }
+  .pfand-form .money { flex: 1; }
+  .pfand-ok { flex: 0 0 auto; padding: 0 14px; border: none; border-radius: 12px; background: var(--done); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  :root[data-theme="dark"] .pfand-ok { color: #142312; }
+  .pfand-x { flex: 0 0 44px; border: none; border-radius: 12px; background: var(--chip); color: var(--muted); font-size: 1.2rem; cursor: pointer; }
+  .sum-row { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 2px; }
+  .receipt tr.pf td { color: var(--done); }
+  .receipt tfoot tr.payinfo td { font-weight: normal; font-size: 0.85rem; color: var(--muted); padding-top: 6px; }
+  .pay-total { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 0 16px; }
+  .pay-total span { color: var(--muted); }
+  .pay-total strong { font-size: 2rem; font-variant-numeric: tabular-nums; }
+  .field.big { font-size: 1.4rem; font-weight: 600; padding: 14px 40px 14px 16px; font-variant-numeric: tabular-nums; }
+  .set-label .opt { text-transform: none; letter-spacing: 0; font-weight: normal; }
+  .quick-cash { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .quick-cash button {
+    flex: 1 1 0; min-width: 64px; padding: 10px 8px; border: none; border-radius: 10px;
+    background: var(--chip); color: var(--text); font: inherit; font-weight: 600; cursor: pointer;
+    font-variant-numeric: tabular-nums;
+  }
+  .quick-cash button:active { transform: scale(.95); }
+  .change {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-top: 14px; padding: 14px 16px; border-radius: 14px;
+    background: var(--chip); color: var(--muted);
+  }
+  .change strong { font-size: 1.5rem; color: var(--text); font-variant-numeric: tabular-nums; }
+  .change.ok { background: color-mix(in srgb, var(--done) 18%, var(--card)); color: var(--done); }
+  .change.ok strong { color: var(--done); }
+  .change.short { background: var(--late-soft); color: var(--late); }
+  .change.short strong { color: var(--late); }
+  .card-note { margin: 16px 0 0; padding: 14px 16px; border-radius: 14px; background: var(--chip); color: var(--muted); }
+  .card-note[hidden], #cashBox[hidden] { display: none; }
+  .pay-confirm { background: var(--done) !important; }
+  :root[data-theme="dark"] .pay-confirm { color: #142312 !important; }
+  .receipt tfoot tr.sub td { font-weight: normal; font-size: 0.9rem; padding-top: 10px; color: var(--muted); }
+  .receipt tfoot tr.pf td { font-weight: normal; font-size: 0.9rem; padding-top: 4px; color: var(--done); }
+  .sum-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 1.05rem; }
+  .sum-row strong { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+  .sum-note { margin: 4px 0 14px; font-size: 0.8rem; color: var(--muted); }
+  .pay {
+    width: 100%; padding: 14px; border: none; border-radius: 12px;
+    background: var(--done); color: #fff; font: inherit; font-weight: 700; cursor: pointer;
+  }
+  .pay:active { transform: scale(.98); }
+  :root[data-theme="dark"] .pay { color: #142312; }
+  .sheet .backup { justify-content: flex-start; margin-top: 0; }
+  .archive { display: grid; gap: 10px; }
+  .archive[hidden] { display: none; }
+  .arch {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+  }
+  .arch-head {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    padding: 16px 16px; border: none; background: transparent; color: var(--text);
+    font: inherit; text-align: left; cursor: pointer;
+  }
+  .arch-head .t { flex: 1; font-weight: 600; }
+  .arch-head .t small { display: block; font-weight: normal; color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+  .arch-head .p { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .arch-head .chev { color: var(--muted); transition: transform .3s cubic-bezier(.2, .9, .3, 1); }
+  .arch.open .arch-head .chev { transform: rotate(180deg); }
+  .arch-body { height: 0; overflow: hidden; }
+  .arch.open .arch-body { height: auto; }
+  .arch-inner { padding: 0 16px 16px; border-top: 1px dashed var(--line); }
+  .receipt { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+  .receipt td { padding: 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .receipt td.q { color: var(--muted); padding: 7px 10px; white-space: nowrap; }
+  .receipt td.pr { text-align: right; white-space: nowrap; }
+  .receipt tfoot td { border-bottom: none; padding-top: 12px; font-weight: 700; font-size: 1.05rem; }
+  .arch-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+  .arch-actions button {
+    font: inherit; font-size: 0.8rem; padding: 6px 12px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line); background: transparent; color: var(--muted);
+  }
+  .arch-actions button:hover { color: var(--late); border-color: var(--late); }
+  .stepper { display: flex; gap: 8px; }
+  .stepper .field { text-align: center; font-weight: 600; flex: 1; }
+  .stepper button {
+    flex: 0 0 54px; border: none; border-radius: 12px; font-size: 1.4rem; cursor: pointer;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .money { position: relative; }
+  .money .field { padding-right: 36px; }
+  .money span { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .weight-row { display: flex; gap: 8px; }
+  .weight-row .field { flex: 1; }
+  .seg-small { flex: 0 0 110px; }
+  .item-total { margin: 16px 0 0; font-size: 1.05rem; font-weight: 700; text-align: right; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .item-total:empty { display: none; }
+  .checkout-hint {
+    margin: 8px 0 4px; padding: 10px 12px; border-radius: 12px;
+    background: var(--accent-soft); color: var(--accent); font-size: 0.88rem; line-height: 1.4;
+  }
+  .checkout-hint[hidden] { display: none; }
+  #iQtyBox[hidden], #iWeightBox[hidden] { display: none; }
   h1 {
     font-size: 2.2rem;
     margin: 0 0 4px;
@@ -182,6 +382,18 @@
   }
   .filters .right { margin-left: auto; }
   .filters button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  /* Gleitende Reiter-Markierung */
+  .filters { position: relative; }
+  .filters button { position: relative; z-index: 1; transition: color .25s; }
+  .filters.pill-ready button.active { background: transparent; }
+  .tab-pill {
+    position: absolute; left: 0; top: 0; z-index: 0;
+    border-radius: 999px; background: var(--accent-soft);
+    pointer-events: none; opacity: 0;
+  }
+  .filters.pill-ready .tab-pill { opacity: 1; }
+  .filters.pill-anim .tab-pill { transition: transform .38s cubic-bezier(.3, 1.3, .5, 1), width .38s cubic-bezier(.3, 1.3, .5, 1); }
+  .tab-pane { position: relative; }
   ul {
     list-style: none;
     margin: 0;
@@ -371,6 +583,19 @@
   }
   .gear svg { width: 18px; height: 18px; }
   .gear:hover { color: var(--accent); }
+  .app-foot { display: flex; justify-content: center; margin-top: 36px; }
+  .foot-settings {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border: 1px solid var(--line); border-radius: 999px;
+    background: transparent; color: var(--muted);
+    font: inherit; font-size: 0.85rem; cursor: pointer;
+    transition: color .15s, border-color .15s, transform .15s;
+  }
+  .foot-settings svg { width: 16px; height: 16px; transition: transform .5s cubic-bezier(.2, .9, .3, 1); }
+  .foot-settings:hover { color: var(--accent); border-color: var(--accent); }
+  .foot-settings:hover svg { transform: rotate(90deg); }
+  .foot-settings:active { transform: scale(.96); }
+  .set-desc { margin: -4px 0 12px; font-size: 0.85rem; color: var(--muted); line-height: 1.45; }
   .set-label { margin: 18px 0 10px; font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
   .swatch {
@@ -395,6 +620,7 @@
     background: var(--bg); outline: none;
   }
   .field:focus { border-color: var(--accent); }
+  .field.invalid { border-color: var(--late); }
   textarea.field { min-height: 90px; resize: vertical; line-height: 1.45; }
   .subs { list-style: none; margin: 0; padding: 0; border: none; background: transparent; border-radius: 0; overflow: visible; }
   .subs li {
@@ -498,21 +724,25 @@
     .check { grid-column: 1; grid-row: 1; }
     .text { grid-column: 2; grid-row: 1; }
     .del { grid-column: 3; grid-row: 1; }
-    .due { grid-column: 2; grid-row: 2; justify-self: start; max-width: 100%; white-space: normal; line-height: 1.5; }
+    .due, .ichip { grid-column: 2; grid-row: 2; justify-self: start; max-width: 100%; white-space: normal; line-height: 1.5; }
   }
 </style>
 </head>
 <body>
-<main>
-  <div class="head">
-    <div>
-      <h1>Meine Todos</h1>
-      <p class="sub" id="count"></p>
+<div class="app">
+  <header class="topbar">
+    <div class="nav-wrap">
+      <button type="button" class="navbtn" id="navBtn" aria-label="Seite wechseln" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>
+        <span id="navLabel">Start</span>
+      </button>
+      <div class="navmenu" id="navMenu" hidden role="menu">
+        <button type="button" role="menuitem" data-go=""><i>🏠</i>Start</button>
+        <button type="button" role="menuitem" data-go="todo"><i>✅</i>Todos</button>
+        <button type="button" role="menuitem" data-go="einkauf"><i>🛒</i>Einkauf</button>
+      </div>
     </div>
     <div class="head-right">
-    <button type="button" class="gear" id="openSettings" title="Einstellungen" aria-label="Einstellungen">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-    </button>
     <div class="theme" role="radiogroup" aria-label="Darstellung">
       <span class="thumb" aria-hidden="true"></span>
       <button type="button" data-theme-btn="light" title="Hell" aria-label="Hell">
@@ -523,10 +753,38 @@
       </button>
     </div>
     </div>
-  </div>
+  </header>
+
+  <!-- Startseite -->
+  <main class="view" id="view-home">
+    <div class="home">
+      <p class="home-date" id="homeDate"></p>
+      <h1 class="home-hello" id="homeHello">Hallo! 👋</h1>
+      <p class="home-sub">Was steht als Nächstes an?</p>
+      <div class="home-cards">
+        <button type="button" class="home-card" data-go="todo">
+          <span class="home-icon">✅</span>
+          <span class="home-title">Todos</span>
+          <span class="home-info" id="homeTodoInfo"></span>
+          <span class="home-arrow">→</span>
+        </button>
+        <button type="button" class="home-card" data-go="einkauf">
+          <span class="home-icon">🛒</span>
+          <span class="home-title">Einkauf</span>
+          <span class="home-info" id="homeShopInfo"></span>
+          <span class="home-arrow">→</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Todos -->
+  <main class="view" id="view-todo" hidden>
+    <h1>Meine Todos</h1>
+    <p class="sub" id="count"></p>
 
   <form id="form">
-    <input type="text" id="input" placeholder="Was steht an? z. B. „morgen 15 Uhr“" autocomplete="off" autofocus>
+    <input type="text" id="input" placeholder="Was steht an? z. B. „morgen 15 Uhr“" autocomplete="off">
     <div class="quick-hint" id="quickHint" hidden><span id="quickHintText"></span><button type="button" id="quickIgnore">ignorieren</button></div>
     <input type="date" id="date" title="Deadline (optional)" class="empty">
     <input type="time" id="time" title="Uhrzeit (optional)" class="empty">
@@ -534,20 +792,62 @@
   </form>
 
   <div class="filters">
+    <span class="tab-pill" aria-hidden="true"></span>
     <button data-filter="open" class="active">Offen</button>
     <button data-filter="due">Nach Deadline</button>
     <button data-filter="done" class="right">Erledigt</button>
   </div>
 
-  <ul id="list"></ul>
-  <div class="empty" id="empty" hidden></div>
-
-  <div class="backup">
-    <button id="export" type="button">Backup speichern</button>
-    <button id="import" type="button">Backup laden</button>
-    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  <div class="tab-pane" id="todoPane">
+    <ul id="list" class="swipe-list"></ul>
+    <div class="empty" id="empty" hidden></div>
   </div>
-</main>
+  </main>
+
+  <!-- Einkauf -->
+  <main class="view" id="view-shop" hidden>
+    <h1>Einkauf</h1>
+    <p class="sub" id="shopCount"></p>
+
+    <form id="shopForm">
+      <input type="text" id="shopInput" placeholder="Was brauchst du? z. B. „2x Milch 1,19 €“" autocomplete="off" enterkeyhint="done">
+      <div class="quick-hint" id="shopHint" hidden><span id="shopHintText"></span><button type="button" id="shopIgnore">ignorieren</button></div>
+      <button class="add" type="submit">Auf die Liste</button>
+    </form>
+
+    <div class="filters" id="shopTabs">
+      <span class="tab-pill" aria-hidden="true"></span>
+      <button data-shop="list" class="active">Einkaufsliste <b class="tab-count" id="listBadge" hidden></b></button>
+      <button data-shop="cart">Zur Kasse?</button>
+      <button data-shop="archive" class="right">Archiv</button>
+    </div>
+
+    <div class="tab-pane" id="shopPane">
+    <ul id="shopList" class="swipe-list"></ul>
+    <div class="empty" id="shopEmpty" hidden></div>
+
+    <div class="checkout" id="checkout" hidden>
+      <div class="sum-line"><span>Artikel</span><span id="subTotal">0,00 €</span></div>
+      <div id="pfandRows"></div>
+      <button type="button" class="add-pfand" id="addPfand">♻️ ＋ Pfandbon</button>
+      <form class="pfand-form" id="pfandForm" hidden>
+        <div class="money"><input class="field" id="pfandInput" type="text" inputmode="decimal" placeholder="Betrag vom Pfandbon" autocomplete="off" enterkeyhint="done"><span>€</span></div>
+        <button type="submit" class="pfand-ok">Abziehen</button>
+        <button type="button" class="pfand-x" id="pfandCancel" aria-label="Abbrechen">×</button>
+      </form>
+      <div class="sum-row"><span>Summe</span><strong id="sumTotal">0,00 €</strong></div>
+      <p class="sum-note" id="sumNote"></p>
+      <button type="button" class="pay" id="payBtn">Bezahlen</button>
+    </div>
+
+    <div class="archive" id="archive" hidden></div>
+    </div>
+  </main>
+
+  <footer class="app-foot">
+    <button type="button" class="foot-settings" id="openSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Einstellungen</span></button>
+  </footer>
+</div>
 
 <div class="sheet-backdrop" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
@@ -588,18 +888,89 @@
   </div>
 </div>
 
+<div class="sheet-backdrop" id="itemSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Artikel bearbeiten">
+    <h2 id="iHead">Artikel</h2>
+    <p class="checkout-hint" id="iHint" hidden></p>
+    <p class="set-label">Name</p>
+    <input class="field" id="iName" type="text" autocomplete="off">
+    <p class="set-label">Art</p>
+    <div class="seg" id="iMode">
+      <button type="button" data-mode="qty">🔢 Menge</button>
+      <button type="button" data-mode="weight">⚖️ Gewicht</button>
+    </div>
+    <div id="iQtyBox">
+      <p class="set-label">Anzahl</p>
+      <div class="stepper">
+        <button type="button" id="iMinus" aria-label="Weniger">−</button>
+        <input class="field" id="iQty" type="number" inputmode="numeric" min="1" step="1">
+        <button type="button" id="iPlus" aria-label="Mehr">+</button>
+      </div>
+      <p class="set-label">Preis pro Stück</p>
+      <div class="money"><input class="field" id="iUnit" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off"><span>€</span></div>
+    </div>
+    <div id="iWeightBox" hidden>
+      <p class="set-label">Gewicht</p>
+      <div class="weight-row">
+        <input class="field" id="iWeight" type="text" inputmode="decimal" placeholder="z. B. 500" autocomplete="off">
+        <div class="seg seg-small" id="iUnitSeg">
+          <button type="button" data-wu="g">g</button>
+          <button type="button" data-wu="kg">kg</button>
+        </div>
+      </div>
+      <p class="set-label">Gesamtpreis</p>
+      <div class="money"><input class="field" id="iPrice" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off"><span>€</span></div>
+    </div>
+    <p class="item-total" id="iTotal"></p>
+    <div class="sheet-actions">
+      <button type="button" class="ghost" id="iCancel">Abbrechen</button>
+      <button type="button" class="primary" id="iSave">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="paySheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Bezahlen">
+    <h2>Bezahlen</h2>
+    <div class="pay-total"><span id="payTotalLabel">Zu zahlen</span><strong id="payTotal">0,00 €</strong></div>
+    <div class="seg pay-seg" id="payMethod">
+      <button type="button" data-pay="cash">💶 Bar</button>
+      <button type="button" data-pay="card">💳 Karte</button>
+    </div>
+    <div id="cashBox">
+      <p class="set-label">Gegeben <span class="opt">(optional – nur fürs Rückgeld)</span></p>
+      <div class="money"><input class="field big" id="cashGiven" type="text" inputmode="decimal" placeholder="0,00" autocomplete="off" enterkeyhint="done"><span>€</span></div>
+      <div class="quick-cash" id="quickCash"></div>
+      <div class="change" id="changeBox"><span id="changeLabel">Rückgeld</span><strong id="changeVal">–</strong></div>
+    </div>
+    <p class="card-note" id="cardBox" hidden>Mit Karte bezahlt – kein Rückgeld. 👍</p>
+    <div class="sheet-actions">
+      <button type="button" class="ghost" id="payCancel">Abbrechen</button>
+      <button type="button" class="primary pay-confirm" id="payConfirm">Bezahlt ✓</button>
+    </div>
+  </div>
+</div>
+
 <div class="sheet-backdrop" id="settings" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-label="Einstellungen">
     <h2>Einstellungen</h2>
     <p class="set-label">Akzentfarbe</p>
     <div class="swatches" id="swatches"></div>
-    <p class="set-label">Zahl am App-Icon</p>
+    <p class="set-label">Todo-Zähler am App-Icon</p>
+    <p class="set-desc">Zeigt auf dem App-Symbol deines Home-Bildschirms eine kleine rote Zahl – so siehst du, wie viele Todos anstehen, ohne die App zu öffnen. Einkäufe werden dabei nicht mitgezählt.</p>
     <div class="seg" id="badgeSeg">
       <button type="button" data-badge="off">Aus</button>
-      <button type="button" data-badge="open">Offene</button>
-      <button type="button" data-badge="due">Fällige</button>
+      <button type="button" data-badge="open">Alle offenen</button>
+      <button type="button" data-badge="due">Heute fällig</button>
     </div>
     <p class="set-hint" id="badgeHint"></p>
+    <p class="set-label">Daten sichern</p>
+    <div class="backup">
+      <button id="export" type="button">Backup speichern</button>
+      <button id="import" type="button">Backup laden</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+    <p class="set-hint">Enthält Todos, Einkaufsliste und Archiv.</p>
     <div class="sheet-actions">
       <button type="button" class="primary" id="setClose">Fertig</button>
     </div>
@@ -796,9 +1167,9 @@
   const toast = document.getElementById("toast");
   const toastBar = document.getElementById("toastBar");
   let undoState = null, undoTimer = null;
-  function showUndo(t, index) {
-    undoState = { t, index };
-    document.getElementById("toastText").textContent = `„${t.text}“ gelöscht`;
+  function showUndo(text, undoFn) {
+    undoState = { undoFn };
+    document.getElementById("toastText").textContent = text;
     clearTimeout(undoTimer);
     const wasHidden = toast.hidden;
     toast.hidden = false;
@@ -820,17 +1191,19 @@
   }
   document.getElementById("toastUndo").addEventListener("click", () => {
     if (!undoState) return;
-    const { t, index } = undoState;
-    if (!todos.some(x => x.id === t.id)) todos.splice(Math.min(index, todos.length), 0, t);
-    save(); render();
+    const fn = undoState.undoFn;
     hideUndo();
+    fn();
   });
   function deleteTodo(t, li, dir = 1, fromCurrent = false) {
     const index = todos.findIndex(x => x.id === t.id);
     if (index < 0) return;
     todos.splice(index, 1);
     save();
-    showUndo(t, index);
+    showUndo(`„${t.text}“ gelöscht`, () => {
+      if (!todos.some(x => x.id === t.id)) todos.splice(Math.min(index, todos.length), 0, t);
+      save(); render();
+    });
     swipeOut(li, "delete", { dir, fromCurrent });
   }
   function completeTodo(t, li, fromCurrent = false) {
@@ -843,10 +1216,10 @@
   }
 
   // Wisch-Animation nach rechts, wenn ein Todo abgehakt wird
-  function swipeOut(li, kind = "done", { dir = 1, fromCurrent = false } = {}) {
+  function swipeOut(li, kind = "done", { dir = 1, fromCurrent = false, after = render } = {}) {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const bg = li.previousElementSibling && li.previousElementSibling.classList.contains("swipe-bg") ? li.previousElementSibling : null;
-    if (reduce || !li.animate) { bg && bg.remove(); render(); return; }
+    if (reduce || !li.animate) { bg && bg.remove(); after(); return; }
     li.style.pointerEvents = "none";
     li.classList.add(kind === "delete" ? "swiping-del" : "swiping");
     const h = li.offsetHeight;
@@ -872,15 +1245,18 @@
         ],
         { duration: 220, easing: "ease-out", fill: "forwards" }
       );
-      collapse.onfinish = render;
+      collapse.onfinish = after;
     };
   }
 
   let gesture = null;          // läuft gerade Wischen/Ziehen?
-  let pendingRender = false;
+  const pendingRenders = new Set();
+  function flushPending() {
+    const fns = [...pendingRenders]; pendingRenders.clear();
+    fns.forEach(fn => fn());
+  }
   function render() {
-    if (gesture) { pendingRender = true; return; }
-    pendingRender = false;
+    if (gesture) { pendingRenders.add(render); return; }
     let visible = todos.filter(t => filter === "done" ? t.done : !t.done);
     // "Nach Deadline": offene Todos, früheste Deadline zuerst, ohne Deadline am Ende
     if (filter === "due") {
@@ -981,7 +1357,23 @@
       del.addEventListener("click", () => deleteTodo(t, li));
 
       li.append(cb, span, due, del);
-      attachGestures(li, t);
+      attachGestures(li, {
+        listEl: list,
+        canDrag: () => filter === "open" && !t.done,
+        rightText: t.done ? "↺ Wieder offen" : "✓ Erledigt",
+        leftText: "Löschen 🗑",
+        onRight: li => {
+          if (!t.done) completeTodo(t, li, true);
+          else { t.done = false; delete t.doneAt; save(); swipeOut(li, "delete", { fromCurrent: true }); }
+        },
+        onLeft: li => deleteTodo(t, li, -1, true),
+        onReorder: ids => {
+          const byId = new Map(todos.map(x => [String(x.id), x]));
+          const ordered = ids.map(id => byId.get(id)).filter(Boolean);
+          todos = [...ordered, ...todos.filter(x => !ids.includes(String(x.id)))];
+          save(); render();
+        }
+      });
       list.appendChild(li);
     }
 
@@ -1002,27 +1394,58 @@
     updateBadge();
   }
 
-  // --- Gesten: wischen (rechts erledigt, links löschen) und lange drücken zum Sortieren ---
+  // --- Reiterwechsel: Inhalt gleitet in Wechselrichtung, Markierung wandert mit ---
+  function placePill(tabs, animate) {
+    const pill = tabs.querySelector(".tab-pill");
+    const active = tabs.querySelector("button.active");
+    if (!pill || !active || !active.offsetWidth) return;
+    tabs.classList.toggle("pill-anim", !!animate);
+    pill.style.width = active.offsetWidth + "px";
+    pill.style.height = active.offsetHeight + "px";
+    pill.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
+    tabs.classList.add("pill-ready");
+  }
+  const paneAnims = new WeakMap();
+  function slideTabs(pane, dir, doRender) {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!dir || reduce || !pane.animate) { doRender(); return; }
+    (paneAnims.get(pane) || []).forEach(a => a.cancel());
+    const out = pane.animate(
+      [{ transform: "translateX(0)", opacity: 1 }, { transform: `translateX(${-dir * 48}px)`, opacity: 0 }],
+      { duration: 150, easing: "cubic-bezier(.4, 0, 1, 1)", fill: "forwards" });
+    paneAnims.set(pane, [out]);
+    out.onfinish = () => {
+      doRender();
+      out.cancel();
+      const inn = pane.animate(
+        [{ transform: `translateX(${dir * 56}px)`, opacity: 0 }, { transform: "translateX(0)", opacity: 1 }],
+        { duration: 300, easing: "cubic-bezier(.2, .9, .3, 1)" });
+      paneAnims.set(pane, [inn]);
+    };
+  }
+  window.addEventListener("resize", () => document.querySelectorAll(".filters").forEach(t => placePill(t, false)));
+
+  // --- Gesten: wischen (rechts / links) und lange drücken zum Sortieren – für alle Listen ---
   let suppressClickUntil = 0;
-  list.addEventListener("click", e => {
-    if (Date.now() < suppressClickUntil) { e.preventDefault(); e.stopPropagation(); }
+  document.addEventListener("click", e => {
+    if (Date.now() < suppressClickUntil && e.target.closest(".swipe-list")) { e.preventDefault(); e.stopPropagation(); }
   }, true);
   document.addEventListener("touchmove", e => { if (gesture) e.preventDefault(); }, { passive: false });
-  list.addEventListener("contextmenu", e => { if (gesture || e.target.closest("li")) e.preventDefault(); });
+  document.addEventListener("contextmenu", e => { if (gesture || e.target.closest(".swipe-list li")) e.preventDefault(); });
 
-  function attachGestures(li, t) {
+  function attachGestures(li, o) {
     let sx = 0, sy = 0, pid = null, state = null, lpTimer = null, dx = 0, bg = null;
     const threshold = () => Math.min(120, li.offsetWidth * 0.3);
 
     li.addEventListener("pointerdown", e => {
       if (e.button !== 0 || gesture || li.classList.contains("swiping") || li.classList.contains("swiping-del")) return;
       sx = e.clientX; sy = e.clientY; pid = e.pointerId; state = "pending"; dx = 0;
-      if (filter === "open" && !t.done) {
+      if (o.canDrag && o.canDrag()) {
         lpTimer = setTimeout(() => {
           if (state !== "pending") return;
           state = "drag"; gesture = "drag";
           try { li.setPointerCapture(pid); } catch (err) {}
-          startDrag(li, sy);
+          startDrag(li, sy, o);
         }, 420);
       }
     });
@@ -1039,7 +1462,9 @@
           bg.className = "swipe-bg";
           bg.style.top = li.offsetTop + "px";
           bg.style.height = li.offsetHeight + "px";
-          bg.innerHTML = `<span class="l">${t.done ? "↺ Wieder offen" : "✓ Erledigt"}</span><span class="r">Löschen 🗑</span>`;
+          const l = document.createElement("span"); l.className = "l"; l.textContent = o.rightText;
+          const r = document.createElement("span"); r.className = "r"; r.textContent = o.leftText;
+          bg.append(l, r);
           li.before(bg);
         } else if (Math.abs(my) > 10 || Math.abs(mx) > 10) {
           clearTimeout(lpTimer); state = null;   // Scrollen
@@ -1064,17 +1489,14 @@
       if (was === "swipe") {
         suppressClickUntil = Date.now() + 400;
         gesture = null;
-        if (!cancelled && dx > threshold()) {
-          if (!t.done) completeTodo(t, li, true);
-          else { t.done = false; delete t.doneAt; save(); swipeOut(li, "delete", { fromCurrent: true }); }
-        } else if (!cancelled && dx < -threshold()) {
-          deleteTodo(t, li, -1, true);
-        } else {
+        if (!cancelled && dx > threshold()) o.onRight(li);
+        else if (!cancelled && dx < -threshold()) o.onLeft(li);
+        else {
           // Zurückschnappen
           const back = li.animate([{ transform: `translateX(${dx}px)` }, { transform: "translateX(0)" }],
             { duration: 260, easing: "cubic-bezier(.3, 1.4, .5, 1)" });
           li.style.transform = "";
-          back.onfinish = () => { bg && bg.remove(); if (pendingRender) render(); };
+          back.onfinish = () => { bg && bg.remove(); flushPending(); };
         }
       } else if (was === "drag") {
         suppressClickUntil = Date.now() + 400;
@@ -1087,7 +1509,7 @@
 
   // Ziehen zum Sortieren
   let drag = null;
-  function startDrag(li, y) {
+  function startDrag(li, y, o) {
     const rect = li.getBoundingClientRect();
     const ph = document.createElement("li");
     ph.className = "placeholder";
@@ -1095,13 +1517,14 @@
     li.before(ph);
     Object.assign(li.style, { position: "fixed", left: rect.left + "px", top: rect.top + "px", width: rect.width + "px", zIndex: 40, margin: 0 });
     li.classList.add("dragging");
-    drag = { li, ph, offset: y - rect.top };
+    drag = { li, ph, offset: y - rect.top, listEl: o.listEl, onReorder: o.onReorder };
     if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
   }
   function moveDrag(y) {
     if (!drag) return;
+    const listEl = drag.listEl;
     drag.li.style.top = y - drag.offset + "px";
-    const items = [...list.children].filter(el => el !== drag.li && el !== drag.ph && el.tagName === "LI");
+    const items = [...listEl.children].filter(el => el !== drag.li && el !== drag.ph && el.tagName === "LI");
     let before = null;
     for (const el of items) {
       const r = el.getBoundingClientRect();
@@ -1112,7 +1535,7 @@
     if (next !== before) {
       // FLIP: andere Einträge weich nachrutschen lassen
       const first = new Map(items.map(el => [el, el.getBoundingClientRect().top]));
-      list.insertBefore(drag.ph, before);
+      listEl.insertBefore(drag.ph, before);
       for (const el of items) {
         const d = first.get(el) - el.getBoundingClientRect().top;
         if (d) el.animate([{ transform: `translateY(${d}px)` }, { transform: "translateY(0)" }], { duration: 180, easing: "ease-out" });
@@ -1124,20 +1547,16 @@
   }
   function endDrag() {
     if (!drag) { gesture = null; return; }
-    const { li, ph } = drag;
+    const { li, ph, listEl, onReorder } = drag;
     const target = ph.getBoundingClientRect();
     const anim = li.animate([{ top: li.style.top }, { top: target.top - 4 + "px" }], { duration: 160, easing: "ease-out", fill: "forwards" });
     anim.onfinish = () => {
-      const ids = [...list.children]
+      const ids = [...listEl.children]
         .map(el => el === ph ? li.dataset.id : (el.tagName === "LI" && el !== li ? el.dataset.id : null))
         .filter(Boolean);
-      const byId = new Map(todos.map(t => [String(t.id), t]));
-      const ordered = ids.map(id => byId.get(id)).filter(Boolean);
-      const rest = todos.filter(t => !ids.includes(String(t.id)));
-      todos = [...ordered, ...rest];
-      save();
       drag = null; gesture = null;
-      render();
+      pendingRenders.clear();
+      onReorder(ids);
     };
   }
 
@@ -1306,9 +1725,13 @@
     document.querySelectorAll("[data-badge]").forEach(b => b.classList.toggle("active", b.dataset.badge === badgeMode));
     let hint = "";
     if (badgeMode !== "off") {
-      if (!("setAppBadge" in navigator) || !isStandalone()) hint = "Funktioniert nur in der App, die du über „Zum Home-Bildschirm“ geöffnet hast.";
-      else if ("Notification" in window && Notification.permission === "denied") hint = "Mitteilungen sind für die App ausgeschaltet. Erlaube sie unter Einstellungen → Mitteilungen → Todos, damit die Zahl erscheint.";
-      else hint = badgeMode === "open" ? "Zeigt die Zahl aller offenen Todos." : "Zeigt die Zahl der Todos, die heute fällig oder überfällig sind.";
+      if (!("setAppBadge" in navigator) || !isStandalone()) hint = "Funktioniert nur, wenn du die App über das Symbol auf dem Home-Bildschirm öffnest (nicht in Safari).";
+      else if ("Notification" in window && Notification.permission === "denied") hint = "Damit die Zahl erscheinen darf, braucht die App die Erlaubnis für Mitteilungen. Schalte sie in den iPhone-Einstellungen unter Mitteilungen → Todos ein.";
+      else hint = badgeMode === "open"
+        ? "Die Zahl zeigt, wie viele Todos insgesamt noch offen sind – egal ob mit oder ohne Deadline."
+        : "Die Zahl zeigt nur die Todos, deren Deadline heute ist oder die schon überfällig sind.";
+    } else {
+      hint = "Am App-Symbol wird keine Zahl angezeigt.";
     }
     badgeHint.textContent = hint;
   }
@@ -1327,9 +1750,9 @@
   settings.addEventListener("click", e => { if (e.target === settings) hideSheet(settings); });
 
   // Leeres Feld: Button wackelt, Feld leuchtet rot auf
-  const addBtn = document.querySelector("button.add");
-  function emptyWarning() {
-    input.value = "";
+  const addBtn = document.querySelector("#form button.add");
+  function emptyWarning(input = document.getElementById("input"), addBtn = document.querySelector("#form button.add"), clear = true) {
+    if (clear) input.value = "";
     if (navigator.vibrate) { try { navigator.vibrate([30, 40, 30]); } catch (e) {} }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       input.classList.add("invalid"); setTimeout(() => input.classList.remove("invalid"), 900); return;
@@ -1424,12 +1847,16 @@
     return (quote = next);
   }
 
+  const TODO_TABS = ["open", "due", "done"];
   document.querySelectorAll("[data-filter]").forEach(btn => {
     btn.addEventListener("click", () => {
+      if (btn.dataset.filter === filter) return;
+      const dir = Math.sign(TODO_TABS.indexOf(btn.dataset.filter) - TODO_TABS.indexOf(filter));
       if (btn.dataset.filter === "done") pickQuote();
       filter = btn.dataset.filter;
       document.querySelectorAll("[data-filter]").forEach(b => b.classList.toggle("active", b === btn));
-      render();
+      placePill(btn.parentElement, true);
+      slideTabs(document.getElementById("todoPane"), dir, render);
     });
   });
 
@@ -1473,7 +1900,7 @@
 
   // --- Backup ---
   document.getElementById("export").addEventListener("click", async () => {
-    const json = JSON.stringify({ app: "todos", version: 1, exported: new Date().toISOString(), todos }, null, 2);
+    const json = JSON.stringify({ app: "todos", version: 2, exported: new Date().toISOString(), todos, shop, archive, pfand }, null, 2);
     const name = `todos-backup-${todayStr()}.json`;
     const file = new File([json], name, { type: "application/json" });
     // Auf dem iPhone: Teilen-Menü (in Dateien sichern, AirDrop, …)
@@ -1503,8 +1930,25 @@
         .filter(t => t && typeof t.text === "string" && !ids.has(t.id))
         .map(t => ({ id: t.id ?? Date.now() + Math.random(), text: t.text, done: !!t.done, due: t.due || null, time: t.time || null, notes: t.notes || "", subs: Array.isArray(t.subs) ? t.subs : [] }));
       todos = [...todos, ...fresh];
-      save(); render();
-      alert(fresh.length ? `${fresh.length} Todo(s) importiert.` : "Alles schon vorhanden – nichts Neues importiert.");
+      // Einkauf (ab Backup-Version 2)
+      let nShop = 0, nArch = 0;
+      if (!Array.isArray(data) && Array.isArray(data.shop)) {
+        const sid = new Set(shop.map(x => x.id));
+        const add = data.shop.filter(x => x && typeof x.name === "string" && !sid.has(x.id));
+        shop.push(...add); nShop = add.length;
+      }
+      if (!Array.isArray(data) && Array.isArray(data.archive)) {
+        const aid = new Set(archive.map(x => x.id));
+        const add = data.archive.filter(x => x && Array.isArray(x.items) && !aid.has(x.id));
+        archive.push(...add); nArch = add.length;
+        archive.sort((a, b) => b.paidAt - a.paidAt);
+      }
+      save(); saveShop(); render(); renderShop(); updateHome();
+      const parts = [];
+      if (fresh.length) parts.push(`${fresh.length} Todo(s)`);
+      if (nShop) parts.push(`${nShop} Artikel`);
+      if (nArch) parts.push(`${nArch} Einkäufe im Archiv`);
+      alert(parts.length ? `Importiert: ${parts.join(", ")}.` : "Alles schon vorhanden – nichts Neues importiert.");
     } catch (e) {
       alert("Diese Datei konnte nicht gelesen werden. Ist es ein Todo-Backup?");
     }
@@ -1634,7 +2078,7 @@
   });
 
   // Wenn die App aus dem Hintergrund zurückkommt: Datumsanzeige aktualisieren
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) { purgeDone(); render(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { purgeDone(); render(); updateHome(); } });
 
   // Offline-Unterstützung
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
@@ -1652,8 +2096,764 @@
       .catch(() => {});
   }
 
+  // ============================================================
+  // Einkauf
+  // ============================================================
+  const SHOP_KEY = "shop-v1", ARCH_KEY = "shop-archive-v1";
+  let shop = [], archive = [], pfand = [];
+  try { pfand = JSON.parse(localStorage.getItem("shop-pfand-v1")) || []; } catch (e) { pfand = []; }
+  const pfandSum = () => Math.round(pfand.reduce((s, p) => s + p.amount, 0) * 100) / 100;
+  try { shop = JSON.parse(localStorage.getItem(SHOP_KEY)) || []; } catch (e) { shop = []; }
+  try { archive = JSON.parse(localStorage.getItem(ARCH_KEY)) || []; } catch (e) { archive = []; }
+  function saveShop() {
+    try {
+      localStorage.setItem(SHOP_KEY, JSON.stringify(shop));
+      localStorage.setItem(ARCH_KEY, JSON.stringify(archive));
+      localStorage.setItem("shop-pfand-v1", JSON.stringify(pfand));
+    } catch (e) {}
+  }
+  let shopTab = "list";
+  const shopList = document.getElementById("shopList");
+  const shopEmpty = document.getElementById("shopEmpty");
+  const checkout = document.getElementById("checkout");
+  const archiveEl = document.getElementById("archive");
+  const shopInput = document.getElementById("shopInput");
+
+  const eur = n => n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+  const fmtNum = n => n.toLocaleString("de-DE", { maximumFractionDigits: 3 });
+  const moneyInput = n => n == null ? "" : n.toFixed(2).replace(".", ",");
+  function parseMoney(v) {
+    if (v == null) return null;
+    const str = String(v).replace(/\s|€/g, "").replace(",", ".");
+    if (!str) return null;
+    const n = parseFloat(str);
+    return isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+  }
+  function parseNum(v) {
+    const n = parseFloat(String(v || "").replace(",", "."));
+    return isFinite(n) && n > 0 ? n : null;
+  }
+  function itemTotal(it) {
+    if (it.mode === "weight") return it.price ?? null;
+    return it.unitPrice != null ? Math.round(it.unitPrice * (it.qty || 1) * 100) / 100 : null;
+  }
+  function chipText(it) {
+    const tot = itemTotal(it);
+    if (it.mode === "weight") {
+      const w = it.weight != null ? `⚖ ${fmtNum(it.weight)} ${it.weightUnit || "g"}` : "⚖ Gewicht";
+      return tot != null ? `${w} · ${eur(tot)}` : w;
+    }
+    const q = it.qty || 1;
+    if (it.unitPrice != null) return q > 1 ? `${q} × ${eur(it.unitPrice)} = ${eur(tot)}` : eur(tot);
+    return q > 1 ? `${q} Stück` : null;
+  }
+  function qtyText(it) {
+    if (it.mode === "weight") return it.weight != null ? `${fmtNum(it.weight)} ${it.weightUnit || "g"}` : "–";
+    const q = it.qty || 1;
+    return it.unitPrice != null ? `${q} × ${eur(it.unitPrice)}` : `${q} ×`;
+  }
+
+  // Ein Artikel ist "kassenfertig", wenn Preis und Menge bzw. Gewicht feststehen
+  const isComplete = it => it.mode === "weight"
+    ? it.weight != null && it.price != null
+    : (it.qty || 0) >= 1 && it.unitPrice != null;
+
+  function toCart(it, li, fromCurrent = false) {
+    if (!isComplete(it)) {
+      // Erst Menge/Gewicht und Preis eintragen lassen – Artikel bleibt solange auf der Liste
+      const cb = li.querySelector(".check");
+      if (cb) cb.checked = false;
+      if (fromCurrent) {
+        const bg = li.previousElementSibling && li.previousElementSibling.classList.contains("swipe-bg") ? li.previousElementSibling : null;
+        const back = li.animate([{ transform: li.style.transform || "translateX(0)" }, { transform: "translateX(0)" }],
+          { duration: 260, easing: "cubic-bezier(.3, 1.4, .5, 1)" });
+        li.style.transform = "";
+        back.onfinish = () => { bg && bg.remove(); };
+      }
+      openItem(it, () => {
+        const fresh = shopList.querySelector(`li[data-id="${it.id}"]`);
+        if (fresh) toCart(it, fresh);
+        else { it.inCart = true; saveShop(); renderShop(); }
+      });
+      return;
+    }
+    it.inCart = true;
+    saveShop();
+    const allIn = shop.length > 0 && shop.every(x => x.inCart);
+    const r = li.querySelector(".check").getBoundingClientRect();
+    swipeOut(li, "done", { fromCurrent, after: renderShop });
+    if (allIn) setTimeout(() => confetti(r.left + r.width / 2, r.top + r.height / 2), fromCurrent ? 150 : 350);
+  }
+  function backToList(it, li, fromCurrent = false) {
+    it.inCart = false;
+    saveShop();
+    swipeOut(li, "delete", { fromCurrent, after: renderShop });
+  }
+  function deleteItem(it, li, dir = 1, fromCurrent = false) {
+    const index = shop.findIndex(x => x.id === it.id);
+    if (index < 0) return;
+    shop.splice(index, 1);
+    saveShop();
+    showUndo(`„${it.name}“ gelöscht`, () => {
+      if (!shop.some(x => x.id === it.id)) shop.splice(Math.min(index, shop.length), 0, it);
+      saveShop(); renderShop();
+    });
+    swipeOut(li, "delete", { dir, fromCurrent, after: renderShop });
+  }
+
+  function renderShop() {
+    if (gesture) { pendingRenders.add(renderShop); return; }
+    requestAnimationFrame(() => placePill(document.getElementById("shopTabs"), true));
+    const isArch = shopTab === "archive";
+    const visible = shop.filter(it => shopTab === "cart" ? it.inCart : !it.inCart);
+    shopList.innerHTML = "";
+    if (!isArch) for (const it of visible) {
+      const li = document.createElement("li");
+      li.dataset.id = it.id;
+      if (it.inCart) li.classList.add("in-cart");
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.className = "check"; cb.checked = !!it.inCart;
+      cb.title = it.inCart ? "Zurück auf die Liste" : "In den Wagen";
+      cb.addEventListener("change", () => cb.checked ? toCart(it, li) : backToList(it, li));
+
+      const span = document.createElement("span");
+      span.className = "text";
+      span.title = "Antippen zum Bearbeiten";
+      const title = document.createElement("span");
+      title.className = "title";
+      title.textContent = it.name;
+      span.append(title);
+      span.addEventListener("click", () => openItem(it));
+
+      const chip = document.createElement("span");
+      const ct = chipText(it);
+      chip.className = "ichip" + (ct == null ? " none" : (itemTotal(it) != null ? " priced" : ""));
+      chip.textContent = ct ?? "＋ Menge & Preis";
+      chip.title = "Menge & Preis bearbeiten";
+      chip.addEventListener("click", () => openItem(it));
+
+      const del = document.createElement("button");
+      del.className = "del"; del.title = "Löschen"; del.textContent = "×";
+      del.addEventListener("click", () => deleteItem(it, li));
+
+      li.append(cb, span, chip, del);
+      attachGestures(li, {
+        listEl: shopList,
+        canDrag: () => shopTab === "list",
+        rightText: it.inCart ? "↺ Zurück auf die Liste" : "🛒 In den Wagen",
+        leftText: "Löschen 🗑",
+        onRight: li => it.inCart ? backToList(it, li, true) : toCart(it, li, true),
+        onLeft: li => deleteItem(it, li, -1, true),
+        onReorder: ids => {
+          const byId = new Map(shop.map(x => [String(x.id), x]));
+          const ordered = ids.map(id => byId.get(id)).filter(Boolean);
+          shop = [...ordered, ...shop.filter(x => !ids.includes(String(x.id)))];
+          saveShop(); renderShop();
+        }
+      });
+      shopList.append(li);
+    }
+
+    shopList.hidden = isArch || visible.length === 0;
+    shopEmpty.hidden = isArch ? archive.length > 0 : visible.length > 0;
+    shopEmpty.textContent = isArch
+      ? "Noch keine Einkäufe im Archiv. Nach dem Bezahlen landen sie hier. 🧾"
+      : shopTab === "cart"
+        ? "Noch nichts im Wagen. Hak auf der Einkaufsliste ab, was du schon hast. 🛒"
+        : (shop.length ? "Alles im Wagen! Ab zur Kasse. 🎉" : "Deine Einkaufsliste ist leer – was brauchst du? 📝");
+
+    // Summe
+    const cart = shop.filter(x => x.inCart);
+    const subtotal = Math.round(cart.reduce((sum, x) => sum + (itemTotal(x) || 0), 0) * 100) / 100;
+    const total = Math.round((subtotal - pfandSum()) * 100) / 100;
+    const noPrice = cart.filter(x => itemTotal(x) == null).length;
+    checkout.hidden = !(shopTab === "cart" && cart.length > 0);
+    document.getElementById("subTotal").textContent = eur(subtotal);
+    const rows = document.getElementById("pfandRows");
+    rows.innerHTML = "";
+    for (const pb of pfand) {
+      const r = document.createElement("div"); r.className = "pfand-row";
+      const l = document.createElement("span"); l.textContent = "♻️ Pfandbon";
+      const v = document.createElement("strong"); v.textContent = "− " + eur(pb.amount);
+      const x = document.createElement("button"); x.type = "button"; x.textContent = "×"; x.title = "Pfandbon entfernen";
+      x.addEventListener("click", () => {
+        const i = pfand.indexOf(pb); pfand.splice(i, 1); saveShop();
+        r.animate?.([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateX(30px)" }], { duration: 180 });
+        setTimeout(renderShop, 170);
+        showUndo("Pfandbon entfernt", () => { pfand.splice(Math.min(i, pfand.length), 0, pb); saveShop(); renderShop(); });
+      });
+      r.append(l, v, x); rows.append(r);
+      if (pb.fresh) {
+        delete pb.fresh;
+        r.animate?.([{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }], { duration: 260, easing: "ease-out" });
+        v.animate?.([{ transform: "scale(1.25)" }, { transform: "scale(1)" }], { duration: 400, easing: "cubic-bezier(.3, 1.6, .5, 1)" });
+      }
+    }
+    const sumEl = document.getElementById("sumTotal");
+    if (sumEl.dataset.v && sumEl.dataset.v !== String(total) && sumEl.animate && !checkout.hidden)
+      sumEl.animate([{ transform: "scale(1.12)", color: "var(--done)" }, { transform: "scale(1)" }], { duration: 450, easing: "cubic-bezier(.3, 1.5, .5, 1)" });
+    sumEl.dataset.v = total;
+    sumEl.textContent = eur(total);
+    document.getElementById("sumNote").textContent =
+      `${cart.length} Artikel` + (pfand.length ? ` · ${pfand.length} Pfandbon${pfand.length > 1 ? "s" : ""} abgezogen` : "")
+      + (noPrice ? ` · ${noPrice} ohne Preis (nicht in der Summe)` : "")
+      + (total < 0 ? " · Pfand ist höher als der Einkauf" : "");
+
+    // Archiv
+    archiveEl.hidden = !isArch || archive.length === 0;
+    if (isArch) renderArchive();
+
+    const listN = shop.length - cart.length;
+    document.getElementById("shopCount").textContent = shop.length === 0 && !archive.length
+      ? "Leere Liste"
+      : `${listN} auf der Liste · ${cart.length} im Wagen` + (cart.length ? ` · ${eur(total)}` : "");
+    // Zahl am Reiter: wie viele Artikel noch auf der Liste fehlen
+    const badge = document.getElementById("listBadge");
+    badge.hidden = listN === 0;
+    badge.textContent = listN;
+  }
+
+  // Archiv mit aufklappbarer Zusammenfassung
+  const openArch = new Set();
+  function archTitle(e) {
+    const d = new Date(e.paidAt);
+    const date = d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    return `Einkauf: ${date} ${time}`;
+  }
+  function renderArchive() {
+    archiveEl.innerHTML = "";
+    for (const e of archive) {
+      const card = document.createElement("div");
+      card.className = "arch" + (openArch.has(e.id) ? " open" : "");
+
+      const head = document.createElement("button");
+      head.type = "button"; head.className = "arch-head";
+      head.setAttribute("aria-expanded", openArch.has(e.id));
+      const t = document.createElement("span"); t.className = "t"; t.textContent = archTitle(e);
+      const sm = document.createElement("small");
+      sm.textContent = `${e.items.length} Artikel` + (e.payment ? (e.payment.method === "card" ? " · 💳 Karte" : " · 💶 Bar") : "");
+      t.append(sm);
+      const pr = document.createElement("span"); pr.className = "p"; pr.textContent = eur(e.total);
+      const ch = document.createElement("span"); ch.className = "chev"; ch.textContent = "▾";
+      head.append(t, pr, ch);
+
+      const body = document.createElement("div"); body.className = "arch-body";
+      const inner = document.createElement("div"); inner.className = "arch-inner";
+      const table = document.createElement("table"); table.className = "receipt";
+      const tb = document.createElement("tbody");
+      for (const it of e.items) {
+        const tr = document.createElement("tr");
+        const n = document.createElement("td"); n.textContent = it.name;
+        const q = document.createElement("td"); q.className = "q"; q.textContent = qtyText(it);
+        const p = document.createElement("td"); p.className = "pr";
+        const tot = itemTotal(it); p.textContent = tot != null ? eur(tot) : "–";
+        tr.append(n, q, p); tb.append(tr);
+      }
+      const tf = document.createElement("tfoot");
+      if (e.pfand) {
+        tf.innerHTML = `<tr class="sub"><td colspan="2">Zwischensumme</td><td class="pr"></td></tr>`
+          + `<tr class="pf"><td colspan="2">♻️ Pfandbon</td><td class="pr"></td></tr>`
+          + `<tr><td colspan="2">Endpreis</td><td class="pr"></td></tr>`;
+        const prs = tf.querySelectorAll(".pr");
+        prs[0].textContent = eur(e.subtotal ?? e.total + e.pfand);
+        prs[1].textContent = "− " + eur(e.pfand);
+        prs[2].textContent = eur(e.total);
+      } else {
+        tf.innerHTML = `<tr><td colspan="2">Endpreis</td><td class="pr"></td></tr>`;
+        tf.querySelector(".pr").textContent = eur(e.total);
+      }
+      if (e.payment && e.payment.method === "cash" && e.payment.given != null) {
+        tf.insertAdjacentHTML("beforeend",
+          `<tr class="payinfo"><td colspan="2">💶 Bar gegeben</td><td class="pr"></td></tr><tr class="payinfo"><td colspan="2">Rückgeld</td><td class="pr"></td></tr>`);
+        const pi = tf.querySelectorAll("tr.payinfo .pr");
+        pi[0].textContent = eur(e.payment.given); pi[1].textContent = eur(e.payment.change);
+      } else if (e.payment) {
+        tf.insertAdjacentHTML("beforeend", `<tr class="payinfo"><td colspan="3">${e.payment.method === "card" ? "💳 Mit Karte bezahlt" : "💶 Bar bezahlt"}</td></tr>`);
+      }
+      table.append(tb, tf);
+      inner.append(table);
+      const missing = e.items.filter(x => itemTotal(x) == null).length;
+      if (missing) {
+        const note = document.createElement("p"); note.className = "sum-note";
+        note.textContent = `${missing} Artikel ohne Preis – nicht im Endpreis enthalten.`;
+        inner.append(note);
+      }
+      const acts = document.createElement("div"); acts.className = "arch-actions";
+      const delB = document.createElement("button"); delB.type = "button"; delB.textContent = "Einkauf löschen";
+      delB.addEventListener("click", () => {
+        const index = archive.indexOf(e);
+        archive.splice(index, 1); openArch.delete(e.id); saveShop();
+        card.animate?.([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateX(40px)" }], { duration: 220 });
+        setTimeout(renderShop, 200);
+        showUndo("Einkauf gelöscht", () => { archive.splice(Math.min(index, archive.length), 0, e); saveShop(); renderShop(); });
+      });
+      acts.append(delB); inner.append(acts);
+      body.append(inner);
+
+      head.addEventListener("click", () => toggleArch(e, card, body, head));
+      card.append(head, body);
+      archiveEl.append(card);
+    }
+  }
+  function toggleArch(e, card, body, head) {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (card.classList.contains("open")) {
+      openArch.delete(e.id);
+      head.setAttribute("aria-expanded", "false");
+      const h = body.offsetHeight;
+      card.classList.remove("open");
+      if (!reduce && body.animate) body.animate([{ height: h + "px" }, { height: "0px" }], { duration: 260, easing: "cubic-bezier(.4, 0, .2, 1)" });
+    } else {
+      openArch.add(e.id);
+      head.setAttribute("aria-expanded", "true");
+      card.classList.add("open");
+      const h = body.scrollHeight;
+      if (!reduce && body.animate) {
+        body.animate([{ height: "0px" }, { height: h + "px" }], { duration: 340, easing: "cubic-bezier(.2, .9, .3, 1)" });
+        body.firstChild.animate([{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "none" }], { duration: 340, easing: "ease-out" });
+        body.querySelectorAll("tbody tr").forEach((tr, i) =>
+          tr.animate([{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }], { duration: 220, delay: 60 + i * 30, fill: "backwards" }));
+      }
+    }
+  }
+
+  // Pfandbon
+  const pfandForm = document.getElementById("pfandForm"), pfandInput = document.getElementById("pfandInput");
+  const addPfandBtn = document.getElementById("addPfand");
+  addPfandBtn.addEventListener("click", () => {
+    addPfandBtn.hidden = true; pfandForm.hidden = false; pfandInput.value = "";
+    pfandForm.animate?.([{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }], { duration: 220, easing: "ease-out" });
+    pfandInput.focus();
+  });
+  const closePfand = () => { pfandForm.hidden = true; addPfandBtn.hidden = false; pfandInput.blur(); };
+  document.getElementById("pfandCancel").addEventListener("click", closePfand);
+  pfandForm.addEventListener("submit", e => {
+    e.preventDefault();
+    const amount = parseMoney(pfandInput.value);
+    if (!amount) { emptyWarning(pfandInput, pfandForm.querySelector(".pfand-ok")); pfandInput.focus(); return; }
+    pfand.push({ id: Date.now() + Math.random(), amount, fresh: true });
+    saveShop(); closePfand(); renderShop();
+  });
+
+  // Bezahlt → Archiv
+  const paySheet = document.getElementById("paySheet");
+  const cashGiven = document.getElementById("cashGiven");
+  let payMethod = "cash", payDue = 0;
+  try { payMethod = localStorage.getItem("shop-paymethod") || "cash"; } catch (e) {}
+  const cartTotals = () => {
+    const items = shop.filter(x => x.inCart);
+    const subtotal = Math.round(items.reduce((sum, x) => sum + (itemTotal(x) || 0), 0) * 100) / 100;
+    return { items, subtotal, total: Math.round((subtotal - pfandSum()) * 100) / 100 };
+  };
+  function setPayMethod(m) {
+    payMethod = m;
+    try { localStorage.setItem("shop-paymethod", m); } catch (e) {}
+    document.querySelectorAll("#payMethod [data-pay]").forEach(b => b.classList.toggle("active", b.dataset.pay === m));
+    document.getElementById("cashBox").hidden = m !== "cash";
+    document.getElementById("cardBox").hidden = m !== "card";
+    updateChange();
+  }
+  function updateChange() {
+    cashGiven.getAnimations?.().forEach(a => a.cancel());
+    const box = document.getElementById("changeBox"), label = document.getElementById("changeLabel"), val = document.getElementById("changeVal");
+    box.classList.remove("ok", "short");
+    if (payDue <= 0) {
+      label.textContent = "Du bekommst raus"; val.textContent = eur(-payDue); box.classList.add("ok"); return;
+    }
+    const given = parseMoney(cashGiven.value);
+    if (given == null) { label.textContent = "Rückgeld"; val.textContent = "–"; return; }
+    const diff = Math.round((given - payDue) * 100) / 100;
+    if (diff >= 0) { label.textContent = "Rückgeld"; val.textContent = eur(diff); box.classList.add("ok"); }
+    else { label.textContent = "Es fehlen noch"; val.textContent = eur(-diff); box.classList.add("short"); }
+  }
+  function quickAmounts(t) {
+    const out = [t];
+    for (const step of [1, 5, 10, 20, 50, 100]) {
+      const v = Math.ceil(t / step) * step;
+      if (v > t && !out.includes(v)) out.push(v);
+      if (out.length >= 4) break;
+    }
+    return out;
+  }
+  function openPay() {
+    const { items, total } = cartTotals();
+    if (!items.length) return;
+    payDue = total;
+    document.getElementById("payTotalLabel").textContent = total > 0 ? "Zu zahlen" : "Pfand-Auszahlung";
+    document.getElementById("payTotal").textContent = eur(Math.abs(total));
+    cashGiven.value = "";
+    const qc = document.getElementById("quickCash");
+    qc.innerHTML = "";
+    if (total > 0) quickAmounts(total).forEach((v, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = i === 0 ? "Passend" : eur(v).replace(",00", "");
+      b.addEventListener("click", () => {
+        cashGiven.value = moneyInput(v); updateChange();
+        const val = document.getElementById("changeVal");
+        val.animate?.([{ transform: "scale(1.2)" }, { transform: "scale(1)" }], { duration: 350, easing: "cubic-bezier(.3, 1.6, .5, 1)" });
+      });
+      qc.append(b);
+    });
+    cashGiven.parentElement.hidden = total <= 0;
+    document.querySelector("#cashBox .set-label").hidden = total <= 0;
+    setPayMethod(payMethod);
+    showSheet(paySheet);
+  }
+  document.getElementById("payBtn").addEventListener("click", openPay);
+  document.querySelectorAll("#payMethod [data-pay]").forEach(b => b.addEventListener("click", () => setPayMethod(b.dataset.pay)));
+  cashGiven.addEventListener("input", updateChange);
+  cashGiven.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById("payConfirm").click(); } });
+  document.getElementById("payCancel").addEventListener("click", () => hideSheet(paySheet));
+  paySheet.addEventListener("click", e => { if (e.target === paySheet) hideSheet(paySheet); });
+
+  document.getElementById("payConfirm").addEventListener("click", () => {
+    const { items, subtotal, total } = cartTotals();
+    if (!items.length) { hideSheet(paySheet); return; }
+    let payment = { method: payMethod };
+    if (payMethod === "cash" && total > 0) {
+      const given = parseMoney(cashGiven.value);
+      // Feld ist freiwillig: leer = passend bezahlt
+      if (given != null && given < total) {
+        emptyWarning(cashGiven, document.getElementById("payConfirm"), false);
+        cashGiven.focus();
+        return;
+      }
+      payment = given == null ? { method: "cash" } : { method: "cash", given, change: Math.round((given - total) * 100) / 100 };
+    }
+    hideSheet(paySheet);
+    const deposit = pfandSum(), deposits = pfand.slice();
+    const entry = {
+      id: Date.now() + Math.random(), paidAt: Date.now(), total, subtotal, pfand: deposit, payment,
+      items: items.map(x => ({ name: x.name, mode: x.mode || "qty", qty: x.qty || 1, unitPrice: x.unitPrice ?? null, weight: x.weight ?? null, weightUnit: x.weightUnit || "g", price: x.price ?? null }))
+    };
+    archive.unshift(entry);
+    shop = shop.filter(x => !x.inCart);
+    pfand = [];
+    saveShop();
+    const r = document.getElementById("payBtn").getBoundingClientRect();
+    setTimeout(() => confetti(r.left + r.width / 2, r.top), 200);
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!reduce && shopList.animate) {
+      [shopList, checkout].forEach(el => el.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(24px) scale(.98)" }], { duration: 320, delay: 150, easing: "ease-in", fill: "forwards" }));
+      setTimeout(() => { shopList.getAnimations().forEach(a => a.cancel()); checkout.getAnimations().forEach(a => a.cancel()); renderShop(); }, 480);
+    } else renderShop();
+    showUndo("Einkauf archiviert 🧾", () => {
+      archive = archive.filter(x => x.id !== entry.id);
+      shop.push(...items);
+      pfand = deposits;
+      saveShop(); renderShop();
+    });
+  });
+
+  // Reiter
+  const SHOP_TABS = ["list", "cart", "archive"];
+  document.querySelectorAll("[data-shop]").forEach(btn => btn.addEventListener("click", () => {
+    if (btn.dataset.shop === shopTab) return;
+    const dir = Math.sign(SHOP_TABS.indexOf(btn.dataset.shop) - SHOP_TABS.indexOf(shopTab));
+    shopTab = btn.dataset.shop;
+    document.querySelectorAll("[data-shop]").forEach(b => b.classList.toggle("active", b === btn));
+    placePill(btn.parentElement, true);
+    slideTabs(document.getElementById("shopPane"), dir, renderShop);
+  }));
+
+  // Schnelleingabe: "2x Milch 1,19 €", "500 g Tomaten 1,80 €"
+  function parseShop(raw) {
+    let s = " " + raw + " ";
+    let qty = null, weight = null, wu = null, price = null;
+    const end = "(?=[\\s,.!?;]|$)";
+    const take = (re, fn) => {
+      const m = s.match(re);
+      if (!m) return false;
+      fn(m);
+      s = s.slice(0, m.index) + " " + s.slice(m.index + m[0].length);
+      return true;
+    };
+    take(new RegExp(`\\s(?:für\\s|je\\s|à\\s|a\\s)?(\\d+(?:[.,]\\d{1,2})?)\\s?(?:€|eur|euro)${end}`, "i"), m => price = parseMoney(m[1]));
+    take(new RegExp(`\\s(\\d+(?:[.,]\\d+)?)\\s?(kg|kilo|g|gramm)${end}`, "i"), m => {
+      weight = parseFloat(m[1].replace(",", "."));
+      wu = /^k/i.test(m[2]) ? "kg" : "g";
+    });
+    take(/\s(\d{1,3})\s?(?:x|×|stk\.?|stück)(?=\s)/i, m => qty = +m[1]) ||
+    take(/^\s(\d{1,3})\s(?!(?:l|ml|cl|liter|pkg|pack|dose|dosen|flaschen?)\b)(?=\S)/i, m => qty = +m[1]);
+    if (qty == null && weight == null && price == null) return null;
+    const name = s.replace(/\s+/g, " ").replace(/^[\s,;:–-]+|[\s,;:–-]+$/g, "").trim() || raw.trim();
+    const mode = weight != null ? "weight" : "qty";
+    return {
+      name, mode, qty: qty || 1, weight, weightUnit: wu || "g",
+      unitPrice: mode === "qty" ? price : null,
+      price: mode === "weight" ? price : null
+    };
+  }
+  const shopHint = document.getElementById("shopHint");
+  let shopIgnored = false;
+  function updateShopHint() {
+    const q = !shopIgnored ? parseShop(shopInput.value) : null;
+    if (!q) { shopHint.hidden = true; return null; }
+    document.getElementById("shopHintText").textContent = `✨ Erkannt: ${chipText(q) ?? "1 Stück"}  →  „${q.name}“`;
+    shopHint.hidden = false;
+    return q;
+  }
+  shopInput.addEventListener("input", () => { if (!shopInput.value.trim()) shopIgnored = false; updateShopHint(); });
+  document.getElementById("shopIgnore").addEventListener("click", () => { shopIgnored = true; updateShopHint(); shopInput.focus(); });
+  document.getElementById("shopForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const raw = shopInput.value.trim();
+    if (!raw) { emptyWarning(shopInput, document.querySelector("#shopForm button.add")); return; }
+    const q = updateShopHint();
+    const it = q
+      ? { id: Date.now() + Math.random(), inCart: false, ...q }
+      : { id: Date.now() + Math.random(), inCart: false, name: raw, mode: "qty", qty: 1, unitPrice: null, weight: null, weightUnit: "g", price: null };
+    shop.unshift(it);
+    shopInput.value = ""; shopIgnored = false; shopHint.hidden = true;
+    shopInput.focus();
+    if (shopTab !== "list") {
+      shopTab = "list";
+      document.querySelectorAll("[data-shop]").forEach(b => b.classList.toggle("active", b.dataset.shop === "list"));
+      placePill(document.getElementById("shopTabs"), true);
+    }
+    saveShop(); renderShop();
+  });
+
+  // Artikel bearbeiten: Menge oder Gewicht, Preise
+  const itemSheet = document.getElementById("itemSheet");
+  const iName = document.getElementById("iName"), iQty = document.getElementById("iQty");
+  const iUnit = document.getElementById("iUnit"), iWeight = document.getElementById("iWeight"), iPrice = document.getElementById("iPrice");
+  let iItem = null, iModeV = "qty", iWU = "g";
+  function iSetMode(m) {
+    iModeV = m;
+    document.querySelectorAll("#iMode [data-mode]").forEach(b => b.classList.toggle("active", b.dataset.mode === m));
+    document.getElementById("iQtyBox").hidden = m !== "qty";
+    document.getElementById("iWeightBox").hidden = m !== "weight";
+    iUpdateTotal();
+  }
+  function iSetWU(u) {
+    iWU = u;
+    document.querySelectorAll("#iUnitSeg [data-wu]").forEach(b => b.classList.toggle("active", b.dataset.wu === u));
+  }
+  function iDraft() {
+    return {
+      mode: iModeV, qty: Math.max(1, parseInt(iQty.value, 10) || 1), unitPrice: parseMoney(iUnit.value),
+      weight: parseNum(iWeight.value), weightUnit: iWU, price: parseMoney(iPrice.value)
+    };
+  }
+  function iUpdateTotal() {
+    const d = iDraft(), tot = itemTotal(d);
+    document.getElementById("iTotal").textContent =
+      tot == null ? "" : (d.mode === "qty" && d.qty > 1 ? `${d.qty} × ${eur(d.unitPrice)} = ${eur(tot)}` : `= ${eur(tot)}`);
+  }
+  let iOnComplete = null;
+  function openItem(it, onComplete = null) {
+    iItem = it;
+    iOnComplete = onComplete;
+    const strict = !!onComplete || !!it.inCart;
+    document.getElementById("iHead").textContent = onComplete ? "Ab in den Wagen 🛒" : "Artikel";
+    const hint = document.getElementById("iHint");
+    hint.hidden = !strict;
+    hint.textContent = onComplete
+      ? `Bevor „${it.name}“ in den Wagen kommt: Trag noch Menge oder Gewicht und den Preis ein.`
+      : "Im Wagen braucht jeder Artikel Menge oder Gewicht und einen Preis.";
+    document.getElementById("iSave").textContent = onComplete ? "In den Wagen" : "Fertig";
+    [iUnit, iWeight, iPrice].forEach(f => f.classList.remove("invalid"));
+    iName.value = it.name;
+    iQty.value = it.qty || 1;
+    iUnit.value = moneyInput(it.unitPrice ?? null);
+    iWeight.value = it.weight != null ? String(it.weight).replace(".", ",") : "";
+    iPrice.value = moneyInput(it.price ?? null);
+    iSetWU(it.weightUnit || "g");
+    iSetMode(it.mode || "qty");
+    showSheet(itemSheet);
+    if (onComplete) setTimeout(() => {
+      const target = iModeV === "weight" ? (iWeight.value ? iPrice : iWeight) : iUnit;
+      try { target.focus({ preventScroll: true }); } catch (e) {}
+    }, 340);
+  }
+  document.querySelectorAll("#iMode [data-mode]").forEach(b => b.addEventListener("click", () => iSetMode(b.dataset.mode)));
+  document.querySelectorAll("#iUnitSeg [data-wu]").forEach(b => b.addEventListener("click", () => iSetWU(b.dataset.wu)));
+  document.getElementById("iMinus").addEventListener("click", () => { iQty.value = Math.max(1, (parseInt(iQty.value, 10) || 1) - 1); iUpdateTotal(); });
+  document.getElementById("iPlus").addEventListener("click", () => { iQty.value = (parseInt(iQty.value, 10) || 0) + 1; iUpdateTotal(); });
+  [iQty, iUnit, iPrice, iWeight].forEach(el => el.addEventListener("input", iUpdateTotal));
+  document.getElementById("iCancel").addEventListener("click", () => { iItem = null; iOnComplete = null; hideSheet(itemSheet); });
+  itemSheet.addEventListener("click", e => { if (e.target === itemSheet) { iItem = null; iOnComplete = null; hideSheet(itemSheet); } });
+  [iUnit, iWeight, iPrice].forEach(f => f.addEventListener("input", () => f.classList.remove("invalid")));
+  document.getElementById("iSave").addEventListener("click", () => {
+    if (!iItem) { hideSheet(itemSheet); return; }
+    const d = iDraft();
+    if (iOnComplete || iItem.inCart) {
+      // Pflichtfelder für den Wagen prüfen
+      const missing = d.mode === "weight"
+        ? [d.weight == null && iWeight, d.price == null && iPrice].filter(Boolean)
+        : [d.unitPrice == null && iUnit].filter(Boolean);
+      if (missing.length) {
+        missing.forEach(f => f.classList.add("invalid"));
+        emptyWarning(missing[0], document.getElementById("iSave"), false);
+        try { missing[0].focus({ preventScroll: true }); } catch (e) {}
+        return;
+      }
+    }
+    const name = iName.value.trim();
+    if (name) iItem.name = name;
+    Object.assign(iItem, d);
+    saveShop();
+    const done = iOnComplete;
+    iItem = null; iOnComplete = null;
+    hideSheet(itemSheet);
+    if (done) {
+      // Chip aktualisieren, dann in den Wagen wischen
+      setTimeout(done, 260);
+    } else renderShop();
+  });
+
+  // ============================================================
+  // Startseite & Navigation
+  // ============================================================
+  const VIEWS = { "": "view-home", todo: "view-todo", einkauf: "view-shop" };
+  const VIEW_NAMES = { "": "Start", todo: "Todos", einkauf: "Einkauf" };
+  const navBtn = document.getElementById("navBtn"), navMenu = document.getElementById("navMenu");
+  let currentView = null;
+
+  function updateHome() {
+    const now = new Date(), h = now.getHours();
+    document.getElementById("homeHello").textContent =
+      h < 5 ? "Gute Nacht 🌙" : h < 11 ? "Guten Morgen ☀️" : h < 17 ? "Hallo! 👋" : h < 22 ? "Guten Abend 🌆" : "Gute Nacht 🌙";
+    document.getElementById("homeDate").textContent = now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+    const open = todos.filter(t => !t.done).length, late = todos.filter(isLate).length;
+    document.getElementById("homeTodoInfo").textContent =
+      open ? `${open} offen` + (late ? ` · ${late} überfällig` : "") : "Alles erledigt 🎉";
+    const cart = shop.filter(x => x.inCart).length, list = shop.length - cart;
+    document.getElementById("homeShopInfo").textContent =
+      shop.length ? `${list} auf der Liste` + (cart ? ` · ${cart} im Wagen` : "") : "Liste ist leer";
+  }
+
+  function openNav() {
+    navMenu.hidden = false;
+    navBtn.setAttribute("aria-expanded", "true");
+    navMenu.animate?.([{ opacity: 0, transform: "scale(.9) translateY(-6px)" }, { opacity: 1, transform: "none" }],
+      { duration: 200, easing: "cubic-bezier(.2, .9, .3, 1.2)" });
+  }
+  function closeNav() {
+    if (navMenu.hidden) return;
+    navBtn.setAttribute("aria-expanded", "false");
+    if (!navMenu.animate) { navMenu.hidden = true; return; }
+    navMenu.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.95) translateY(-4px)" }],
+      { duration: 140, easing: "ease-in" }).onfinish = () => { navMenu.hidden = true; };
+  }
+  navBtn.addEventListener("click", e => { e.stopPropagation(); navMenu.hidden ? openNav() : closeNav(); });
+  document.addEventListener("click", e => { if (!navMenu.hidden && !e.target.closest(".nav-wrap")) closeNav(); });
+
+  function go(key) {
+    closeNav();
+    const target = key ? "#" + key : location.pathname + location.search;
+    if ((location.hash.slice(1) || "") === key) return;
+    history.pushState(null, "", target);
+    route();
+  }
+  document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => {
+    if (b.classList.contains("home-card") && b.animate) {
+      b.animate([{ transform: "scale(1)" }, { transform: "scale(.96)" }, { transform: "scale(1)" }], { duration: 220 });
+      setTimeout(() => go(b.dataset.go), 120);
+    } else go(b.dataset.go);
+  }));
+
+  const currentFrom = el => Object.keys(VIEWS).find(k => VIEWS[k] === el.id) || "";
+  function route(animate = true) {
+    let key = location.hash.slice(1);
+    if (!(key in VIEWS)) key = "";
+    if (key === currentView) return;
+    const prev = currentView !== null ? document.getElementById(VIEWS[currentView]) : null;
+    const next = document.getElementById(VIEWS[key]);
+    currentView = key;
+    if (key === "") document.body.classList.add("at-home");
+    const setNav = () => {
+      document.body.classList.toggle("at-home", key === "");
+      document.getElementById("navLabel").textContent = VIEW_NAMES[key];
+    };
+    if (key === "" || !prev || prev.id !== "view-home" || !animate) setNav();
+    navMenu.querySelectorAll("[data-go]").forEach(b => b.classList.toggle("current", b.dataset.go === key));
+    if (key === "") updateHome();
+    if (key === "todo") render();
+    if (key === "einkauf") renderShop();
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const homeEl = document.getElementById("view-home");
+    const cardFor = k => homeEl.querySelector(`.home-card[data-go="${k}"]`);
+    // Punkt (relativ zu einem Element), von dem aus gezoomt wird: Mitte der passenden Karte
+    const originIn = (el, k) => {
+      const c = cardFor(k), r = el.getBoundingClientRect();
+      if (!c || !c.offsetWidth) return "50% 30%";
+      const cr = c.getBoundingClientRect();
+      return `${cr.left + cr.width / 2 - r.left}px ${cr.top + cr.height / 2 - r.top}px`;
+    };
+    const showNext = () => {
+      setNav();
+      Object.values(VIEWS).forEach(id => { document.getElementById(id).hidden = id !== VIEWS[key]; });
+      next.querySelectorAll(".filters").forEach(t => placePill(t, false));
+      window.scrollTo(0, 0);
+    };
+    const clearOrigin = el => () => { el.style.transformOrigin = ""; };
+
+    if (prev && animate && !reduce && prev.animate && prev === homeEl) {
+      // Startseite → Seite: in die Karte hineinzoomen
+      prev.style.transformOrigin = originIn(prev, key);
+      prev.animate(
+        [{ opacity: 1, transform: "scale(1)", filter: "blur(0)" }, { opacity: 0, transform: "scale(1.9)", filter: "blur(3px)" }],
+        { duration: 300, easing: "cubic-bezier(.5, 0, .9, .5)" }
+      ).onfinish = () => {
+        clearOrigin(prev)();
+        const origin = originIn(prev, key);
+        showNext();
+        next.style.transformOrigin = origin;
+        next.animate(
+          [{ opacity: 0, transform: "scale(.55)", borderRadius: "28px" }, { opacity: 1, transform: "scale(1)", borderRadius: "0px" }],
+          { duration: 420, easing: "cubic-bezier(.15, .9, .25, 1)" }
+        ).onfinish = clearOrigin(next);
+      };
+    } else if (prev && animate && !reduce && prev.animate && next === homeEl) {
+      // Seite → Startseite: wieder herauszoomen
+      const from = currentFrom(prev);
+      prev.style.transformOrigin = "50% 25%";
+      prev.animate(
+        [{ opacity: 1, transform: "scale(1)" }, { opacity: 0, transform: "scale(.6)" }],
+        { duration: 240, easing: "cubic-bezier(.5, 0, .9, .5)" }
+      ).onfinish = () => {
+        clearOrigin(prev)();
+        showNext();
+        next.style.transformOrigin = originIn(next, from);
+        next.animate(
+          [{ opacity: 0, transform: "scale(1.8)", filter: "blur(3px)" }, { opacity: 1, transform: "scale(1)", filter: "blur(0)" }],
+          { duration: 420, easing: "cubic-bezier(.15, .9, .25, 1)" }
+        ).onfinish = clearOrigin(next);
+      };
+    } else if (prev && animate && !reduce && prev.animate) {
+      prev.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "translateY(10px) scale(.985)" }],
+        { duration: 150, easing: "ease-in" }).onfinish = () => {
+          prev.hidden = true; next.hidden = false;
+          next.querySelectorAll(".filters").forEach(t => placePill(t, false));
+          window.scrollTo(0, 0);
+          next.animate([{ opacity: 0, transform: "translateY(16px)" }, { opacity: 1, transform: "none" }],
+            { duration: 320, easing: "cubic-bezier(.2, .9, .3, 1)" });
+          if (key === "") next.querySelectorAll(".home-card").forEach((c, i) =>
+            c.animate([{ opacity: 0, transform: "translateY(18px) scale(.97)" }, { opacity: 1, transform: "none" }],
+              { duration: 380, delay: 80 + i * 70, easing: "cubic-bezier(.2, .9, .3, 1)", fill: "backwards" }));
+        };
+    } else {
+      Object.values(VIEWS).forEach(id => { document.getElementById(id).hidden = id !== VIEWS[key]; });
+      next.querySelectorAll(".filters").forEach(t => placePill(t, false));
+    }
+  }
+  window.addEventListener("popstate", () => route());
+  window.addEventListener("hashchange", () => route());
+
   purgeDone();
   render();
+  renderShop();
+  route(false);
+  if (!currentView && !document.getElementById("view-home").hidden) {
+    document.querySelectorAll(".home-card").forEach((c, i) =>
+      c.animate?.([{ opacity: 0, transform: "translateY(18px) scale(.97)" }, { opacity: 1, transform: "none" }],
+        { duration: 420, delay: 120 + i * 80, easing: "cubic-bezier(.2, .9, .3, 1)", fill: "backwards" }));
+  }
 </script>
 </body>
 </html>

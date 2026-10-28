@@ -1,6 +1,6 @@
 // Speichert die App auf dem Gerät, damit sie offline läuft.
 // Bei Änderungen an den Dateien die Versionsnummer erhöhen.
-const CACHE = "todos-v28";
+const CACHE = "todos-v37";
 const FILES = [
   "./",
   "./index.html",
