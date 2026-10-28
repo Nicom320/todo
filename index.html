@@ -16,6 +16,7 @@
     try { th = localStorage.getItem("todos-theme"); } catch (e) {}
     if (th !== "light" && th !== "dark") th = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     document.documentElement.dataset.theme = th;
+    try { var ac = localStorage.getItem("todos-accent"); if (ac && ac !== "orange") document.documentElement.dataset.accent = ac; } catch (e) {}
   })();
 </script>
 <link rel="manifest" href="manifest.json">
@@ -55,6 +56,17 @@
     --today-soft: #3a3020;
     --chip: #302e2a;
   }
+  /* Akzentfarben (hell / dunkel) */
+  :root[data-accent="blue"]   { --accent: #2f6fde; --accent-soft: #e1eafb; }
+  :root[data-accent="green"]  { --accent: #2e8b57; --accent-soft: #dcefe3; }
+  :root[data-accent="purple"] { --accent: #7a4fd6; --accent-soft: #ebe3fa; }
+  :root[data-accent="pink"]   { --accent: #d6407a; --accent-soft: #f9dfe8; }
+  :root[data-accent="teal"]   { --accent: #138a8a; --accent-soft: #d8eeee; }
+  :root[data-theme="dark"][data-accent="blue"]   { --accent: #5b93f0; --accent-soft: #1e2a3e; }
+  :root[data-theme="dark"][data-accent="green"]  { --accent: #5cc28a; --accent-soft: #1d3327; }
+  :root[data-theme="dark"][data-accent="purple"] { --accent: #a184f0; --accent-soft: #2a2340; }
+  :root[data-theme="dark"][data-accent="pink"]   { --accent: #f07aa6; --accent-soft: #3b2230; }
+  :root[data-theme="dark"][data-accent="teal"]   { --accent: #3cc0bd; --accent-soft: #183232; }
   * { box-sizing: border-box; }
   body {
     margin: 0;
@@ -103,14 +115,26 @@
   ::view-transition-old(root),
   ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
   ::view-transition-new(root) { z-index: 2; }
-  .theme button.active { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .theme { position: relative; }
+  .theme button { position: relative; z-index: 1; transition: color .25s; }
+  .theme button.active { color: var(--accent); }
+  /* Schieber, der wie ein Schalter zum gewählten Theme gleitet */
+  .theme .thumb {
+    position: absolute; top: 3px; left: 0;
+    width: 34px; height: 30px;
+    border-radius: 999px;
+    background: var(--card);
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    pointer-events: none;
+  }
+  .theme.ready .thumb { transition: transform .55s cubic-bezier(.34, 1.56, .64, 1), width .45s; }
   form {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 20px;
   }
-  input[type="text"], form input[type="date"] {
+  input[type="text"], form input[type="date"], form input[type="time"] {
     font: inherit;
     font-size: 1rem;
     padding: 14px 16px;
@@ -121,11 +145,14 @@
     outline: none;
     transition: border-color .15s;
   }
-  input[type="text"] { flex: 1 1 240px; min-width: 0; }
-  form input[type="date"] { flex: 0 0 auto; }
-  form input[type="date"]:invalid, form input[type="date"].empty { color: var(--muted); }
-  input[type="text"]:focus, form input[type="date"]:focus { border-color: var(--accent); }
+  input[type="text"] { flex: 1 1 100%; min-width: 0; }
+  input[type="text"].invalid { border-color: var(--late); }
+  form input[type="date"] { flex: 1 1 140px; min-width: 0; }
+  form input[type="time"] { flex: 0 1 130px; min-width: 0; }
+  form input[type="date"].empty, form input[type="time"].empty { color: var(--muted); }
+  input[type="text"]:focus, form input[type="date"]:focus, form input[type="time"]:focus { border-color: var(--accent); }
   button.add {
+    flex: 1 0 auto;
     font: inherit;
     font-weight: 600;
     padding: 14px 22px;
@@ -153,9 +180,8 @@
     color: var(--muted);
     cursor: pointer;
   }
+  .filters .right { margin-left: auto; }
   .filters button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-  .filters .spacer { flex: 1; }
-  .filters .clear:hover { color: var(--accent); }
   ul {
     list-style: none;
     margin: 0;
@@ -173,7 +199,44 @@
     border-bottom: 1px solid var(--line);
   }
   li:last-child { border-bottom: none; }
+  ul { position: relative; }
+  li {
+    position: relative; z-index: 1;
+    background: var(--card);
+    touch-action: pan-y;
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .text { cursor: pointer; }
+  .meta { display: block; margin-top: 3px; font-size: 0.75rem; color: var(--muted); }
+  .meta span + span { margin-left: 8px; }
+  /* Wisch-Hintergrund */
+  .swipe-bg {
+    position: absolute; left: 0; right: 0; z-index: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 22px; font-size: 0.85rem; font-weight: 600;
+    color: var(--muted); background: var(--chip);
+  }
+  .swipe-bg.right { background: color-mix(in srgb, var(--done) 22%, var(--card)); color: var(--done); }
+  .swipe-bg .l, .swipe-bg .r { opacity: 0; transition: opacity .15s, transform .15s; }
+  .swipe-bg.right .l, .swipe-bg.left .r { opacity: 1; }
+  .swipe-bg.armed .l, .swipe-bg.armed .r { transform: scale(1.12); }
+  /* Ziehen zum Sortieren */
+  li.placeholder {
+    background: color-mix(in srgb, var(--accent) 7%, var(--card));
+    border: 2px dashed color-mix(in srgb, var(--accent) 45%, var(--line));
+    border-radius: 12px; margin: 4px 8px;
+  }
+  li.dragging {
+    border-radius: 14px; border: 1px solid var(--line);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .22);
+    transform: scale(1.03);
+    pointer-events: none;
+  }
   li.overdue:not(.done) { box-shadow: inset 3px 0 0 var(--late); }
+  li.swiping { background: color-mix(in srgb, var(--done) 14%, var(--card)); overflow: hidden; }
+  li.swiping .title { text-decoration: line-through; color: var(--muted); }
+  li.swiping-del { overflow: hidden; }
   .check {
     appearance: none;
     width: 22px; height: 22px;
@@ -196,7 +259,17 @@
     transform: rotate(45deg) translate(-1px, -1px);
   }
   .text { flex: 1; word-break: break-word; line-height: 1.4; }
-  li.done .text { text-decoration: line-through; color: var(--muted); }
+  li.done .text { color: var(--muted); }
+  li.done .text .title { text-decoration: line-through; }
+  .gone {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.75rem;
+    text-decoration: none;
+    color: var(--muted);
+    opacity: 0.8;
+    font-variant-numeric: tabular-nums;
+  }
 
   /* Deadline-Chip */
   .due {
@@ -215,17 +288,14 @@
   .due.none:hover { color: var(--accent); border-color: var(--accent); }
   .due.today { background: var(--today-soft); color: var(--today); font-weight: 600; }
   .due.late { background: var(--late-soft); color: var(--late); font-weight: 600; }
+  .due .timer { font-variant-numeric: tabular-nums; }
+  /* Timer läuft: orange · unter 5 Std.: rot · letzte Stunde: pulsierend */
+  .due.timing { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .due.timing.urgent { background: var(--late-soft); color: var(--late); }
+  .due.pulse { animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--late) 18%, transparent); } }
+  @media (prefers-reduced-motion: reduce) { .due.pulse { animation: none; } }
   li.done .due { background: transparent; color: var(--muted); font-weight: normal; }
-  .due input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-    border: none;
-    padding: 0;
-  }
   .due .x {
     margin-left: 6px;
     opacity: 0.6;
@@ -251,12 +321,140 @@
   .del:hover { background: var(--accent-soft); color: var(--accent); }
   .empty {
     text-align: center;
+    line-height: 1.5;
     color: var(--muted);
     padding: 36px 16px;
     background: var(--card);
     border: 1px dashed var(--line);
     border-radius: 16px;
   }
+  /* Erkannte Deadline bei der Schnelleingabe */
+  .quick-hint {
+    flex: 1 1 100%;
+    display: flex; align-items: center; gap: 8px;
+    margin-top: -2px; padding: 8px 12px;
+    font-size: 0.85rem; color: var(--accent);
+    background: var(--accent-soft); border-radius: 10px;
+  }
+  .quick-hint[hidden] { display: none; }
+  .quick-hint span { flex: 1; }
+  .quick-hint button {
+    font: inherit; font-size: 0.8rem; border: none; background: transparent;
+    color: var(--muted); cursor: pointer; padding: 2px 4px;
+  }
+  /* Rückgängig-Leiste */
+  .toast {
+    position: fixed; z-index: 60;
+    left: 50%; bottom: calc(18px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(560px, calc(100% - 32px));
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px 12px 18px;
+    background: var(--text); color: var(--bg);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+  }
+  .toast[hidden] { display: none; }
+  .toast span { flex: 1; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .toast button {
+    font: inherit; font-weight: 700; font-size: 0.9rem;
+    border: none; background: transparent; color: var(--accent); cursor: pointer; padding: 4px 6px;
+  }
+  .toast .bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--accent); transform-origin: left; }
+  /* Kopfzeile: Einstellungen */
+  .head-right { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+  .head-right .theme { margin-top: 0; }
+  .gear {
+    width: 36px; height: 36px; border: none; border-radius: 999px;
+    background: var(--chip); color: var(--muted); cursor: pointer;
+    display: grid; place-items: center; padding: 0;
+  }
+  .gear svg { width: 18px; height: 18px; }
+  .gear:hover { color: var(--accent); }
+  .set-label { margin: 18px 0 10px; font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+  .swatch {
+    width: 40px; height: 40px; border-radius: 999px; border: none; cursor: pointer;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.35);
+    transition: transform .15s;
+  }
+  .swatch.active { box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--text); transform: scale(1.06); }
+  .seg { display: flex; padding: 3px; gap: 3px; border-radius: 12px; background: var(--chip); }
+  .seg button {
+    flex: 1; font: inherit; font-size: 0.9rem; padding: 10px 6px; border: none; border-radius: 9px;
+    background: transparent; color: var(--muted); cursor: pointer;
+  }
+  .seg button.active { background: var(--card); color: var(--accent); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .set-hint { margin: 8px 2px 0; font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+  .set-hint:empty { display: none; }
+  /* Detail-Fenster */
+  .sheet { max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .field {
+    width: 100%; font: inherit; font-size: 1rem; color: var(--text);
+    padding: 12px 14px; border: 2px solid var(--line); border-radius: 12px;
+    background: var(--bg); outline: none;
+  }
+  .field:focus { border-color: var(--accent); }
+  textarea.field { min-height: 90px; resize: vertical; line-height: 1.45; }
+  .subs { list-style: none; margin: 0; padding: 0; border: none; background: transparent; border-radius: 0; overflow: visible; }
+  .subs li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--line);
+    background: transparent; touch-action: auto; -webkit-user-select: auto; user-select: auto;
+  }
+  .subs li:last-child { border-bottom: none; }
+  .subs li .sub-text { flex: 1; word-break: break-word; }
+  .subs li.done .sub-text { text-decoration: line-through; color: var(--muted); }
+  .subs .check { width: 20px; height: 20px; }
+  .subs .sub-del { border: none; background: transparent; color: var(--muted); font-size: 1.1rem; cursor: pointer; width: 30px; height: 30px; border-radius: 8px; }
+  .subs .sub-del:hover { color: var(--accent); background: var(--accent-soft); }
+  .sub-add { display: flex; gap: 8px; margin-top: 8px; }
+  .sub-add .field { flex: 1; }
+  .sub-add button {
+    flex: 0 0 48px; border: none; border-radius: 12px; font-size: 1.3rem;
+    background: var(--accent-soft); color: var(--accent); cursor: pointer;
+  }
+  .confetti { position: fixed; inset: 0; z-index: 70; pointer-events: none; }
+  /* Bearbeiten-Fenster von unten */
+  .sheet-backdrop {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(0, 0, 0, .35);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .sheet-backdrop[hidden] { display: none; }
+  .sheet {
+    width: 100%; max-width: 600px;
+    background: var(--card);
+    border-radius: 22px 22px 0 0;
+    padding: 22px 20px calc(20px + env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, .18);
+  }
+  .sheet h2 { margin: 0; font-size: 1.25rem; }
+  .sheet-todo { margin: 4px 0 18px; color: var(--muted); font-size: 0.9rem; word-break: break-word; }
+  .sheet-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .sheet-row input {
+    flex: 1; min-width: 0;
+    font: inherit; font-size: 1rem;
+    padding: 14px 16px; min-height: 54px;
+    border: 2px solid var(--line); border-radius: 12px;
+    background: var(--bg); color: var(--text); outline: none;
+  }
+  .sheet-row input:focus { border-color: var(--accent); }
+  .sheet-row input.empty { color: var(--muted); }
+  .sheet-row .clr {
+    flex: 0 0 54px;
+    border: none; border-radius: 12px;
+    background: var(--chip); color: var(--muted);
+    font-size: 1.1rem; cursor: pointer;
+  }
+  .sheet-row .clr:hover { color: var(--late); background: var(--late-soft); }
+  .sheet-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .sheet-actions button {
+    flex: 1; font: inherit; font-weight: 600;
+    padding: 14px; border-radius: 12px; border: none; cursor: pointer;
+  }
+  .sheet-actions .ghost { background: var(--chip); color: var(--text); }
+  .sheet-actions .primary { background: var(--accent); color: #fff; }
   .backup {
     display: flex;
     justify-content: center;
@@ -279,23 +477,28 @@
   }
   /* iPhone: leeres Datumsfeld zeigt sonst gar nichts an */
   @supports (-webkit-touch-callout: none) {
-    form input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 54px; text-align: left; }
-    form input[type="date"].empty::before { content: "📅 Deadline (optional)"; color: var(--muted); }
-    form input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+    form input[type="date"], form input[type="time"] { -webkit-appearance: none; appearance: none; min-height: 54px; text-align: left; }
+    form input[type="date"].empty::before { content: "📅 Deadline"; color: var(--muted); }
+    form input[type="time"].empty::before { content: "🕒 Uhrzeit"; color: var(--muted); }
+    .sheet-row input { -webkit-appearance: none; appearance: none; text-align: left; }
+    .sheet-row input[type="date"].empty::before { content: "📅 Kein Datum"; color: var(--muted); }
+    .sheet-row input[type="time"].empty::before { content: "🕒 Keine Uhrzeit"; color: var(--muted); }
+    .sheet-row input::-webkit-date-and-time-value { text-align: left; }
+    form input[type="date"]::-webkit-date-and-time-value,
+    form input[type="time"]::-webkit-date-and-time-value { text-align: left; }
   }
   @media (max-width: 480px) {
-    form input[type="date"] { flex: 1 1 auto; min-width: 0; }
-    button.add { flex: 0 0 auto; }
+    button.add { flex: 1 1 100%; }
     li {
       display: grid;
-      grid-template-columns: 22px 1fr 32px;
+      grid-template-columns: 22px minmax(0, 1fr) 32px;
       column-gap: 12px;
       row-gap: 8px;
     }
     .check { grid-column: 1; grid-row: 1; }
     .text { grid-column: 2; grid-row: 1; }
     .del { grid-column: 3; grid-row: 1; }
-    .due { grid-column: 2; grid-row: 2; justify-self: start; }
+    .due { grid-column: 2; grid-row: 2; justify-self: start; max-width: 100%; white-space: normal; line-height: 1.5; }
   }
 </style>
 </head>
@@ -306,7 +509,12 @@
       <h1>Meine Todos</h1>
       <p class="sub" id="count"></p>
     </div>
+    <div class="head-right">
+    <button type="button" class="gear" id="openSettings" title="Einstellungen" aria-label="Einstellungen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
     <div class="theme" role="radiogroup" aria-label="Darstellung">
+      <span class="thumb" aria-hidden="true"></span>
       <button type="button" data-theme-btn="light" title="Hell" aria-label="Hell">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
       </button>
@@ -314,22 +522,21 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
       </button>
     </div>
+    </div>
   </div>
 
   <form id="form">
-    <input type="text" id="input" placeholder="Was steht an?" autocomplete="off" autofocus>
+    <input type="text" id="input" placeholder="Was steht an? z. B. „morgen 15 Uhr“" autocomplete="off" autofocus>
+    <div class="quick-hint" id="quickHint" hidden><span id="quickHintText"></span><button type="button" id="quickIgnore">ignorieren</button></div>
     <input type="date" id="date" title="Deadline (optional)" class="empty">
+    <input type="time" id="time" title="Uhrzeit (optional)" class="empty">
     <button class="add" type="submit">Hinzufügen</button>
   </form>
 
   <div class="filters">
-    <button data-filter="all" class="active">Alle</button>
-    <button data-filter="open">Offen</button>
-    <button data-filter="done">Erledigt</button>
-    <button data-filter="late">Überfällig</button>
-    <span class="spacer"></span>
-    <button id="sort">Nach Deadline sortieren</button>
-    <button class="clear" id="clear">Erledigte löschen</button>
+    <button data-filter="open" class="active">Offen</button>
+    <button data-filter="due">Nach Deadline</button>
+    <button data-filter="done" class="right">Erledigt</button>
   </div>
 
   <ul id="list"></ul>
@@ -342,15 +549,75 @@
   </div>
 </main>
 
+<div class="sheet-backdrop" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h2 id="sheetTitle">Deadline</h2>
+    <p class="sheet-todo" id="sheetTodo"></p>
+    <div class="sheet-row">
+      <input type="date" id="sDate" aria-label="Datum">
+      <button type="button" class="clr" id="sDateClr" title="Datum entfernen">✕</button>
+    </div>
+    <div class="sheet-row">
+      <input type="time" id="sTime" aria-label="Uhrzeit">
+      <button type="button" class="clr" id="sTimeClr" title="Uhrzeit entfernen">✕</button>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="ghost" id="sCancel">Abbrechen</button>
+      <button type="button" class="primary" id="sSave">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="detail" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Todo bearbeiten">
+    <h2>Todo bearbeiten</h2>
+    <p class="set-label">Text</p>
+    <input class="field" id="dTitle" type="text" autocomplete="off">
+    <p class="set-label">Notizen</p>
+    <textarea class="field" id="dNotes" placeholder="z. B. Adresse, Telefonnummer, Details …"></textarea>
+    <p class="set-label">Unteraufgaben</p>
+    <ul class="subs" id="dSubs"></ul>
+    <div class="sub-add">
+      <input class="field" id="dSubInput" type="text" placeholder="Unteraufgabe hinzufügen" autocomplete="off" enterkeyhint="done">
+      <button type="button" id="dSubAdd" aria-label="Unteraufgabe hinzufügen">+</button>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="ghost" id="dCancel">Abbrechen</button>
+      <button type="button" class="primary" id="dSave">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="settings" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Einstellungen">
+    <h2>Einstellungen</h2>
+    <p class="set-label">Akzentfarbe</p>
+    <div class="swatches" id="swatches"></div>
+    <p class="set-label">Zahl am App-Icon</p>
+    <div class="seg" id="badgeSeg">
+      <button type="button" data-badge="off">Aus</button>
+      <button type="button" data-badge="open">Offene</button>
+      <button type="button" data-badge="due">Fällige</button>
+    </div>
+    <p class="set-hint" id="badgeHint"></p>
+    <div class="sheet-actions">
+      <button type="button" class="primary" id="setClose">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden role="status">
+  <span id="toastText"></span>
+  <button type="button" id="toastUndo">Rückgängig</button>
+  <i class="bar" id="toastBar"></i>
+</div>
+
 <script>
   const KEY = "todos-v1";
-  const SORT_KEY = "todos-sort";
   let todos = [];
-  let filter = "all";
-  let sortByDue = false;
+  let filter = "open";
 
   try { todos = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { todos = []; }
-  try { sortByDue = localStorage.getItem(SORT_KEY) === "1"; } catch (e) {}
 
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(todos)); } catch (e) {} };
 
@@ -359,7 +626,7 @@
   const count = document.getElementById("count");
   const input = document.getElementById("input");
   const dateInput = document.getElementById("date");
-  const sortBtn = document.getElementById("sort");
+  const timeInput = document.getElementById("time");
 
   // --- Datum-Helfer ---
   function todayStr() {
@@ -372,45 +639,263 @@
     const t = new Date(); t.setHours(0, 0, 0, 0);
     return Math.round((a - t) / 86400000);
   }
-  function formatDue(due) {
+  // Zeitpunkt der Deadline: mit Uhrzeit genau dann, sonst 24:00 Uhr am Deadline-Tag
+  function dueMs(t) {
+    const [y, m, d] = t.due.split("-").map(Number);
+    if (t.time) {
+      const [hh, mm] = t.time.split(":").map(Number);
+      return new Date(y, m - 1, d, hh, mm).getTime();
+    }
+    return new Date(y, m - 1, d + 1).getTime();
+  }
+  const fmtTime = time => time.replace(/^0(\d)/, "$1");
+  function formatDue(t) {
+    const due = t.due;
     const diff = dayDiff(due);
     const [y, m, d] = due.split("-").map(Number);
     const date = new Date(y, m - 1, d);
     const sameYear = y === new Date().getFullYear();
     const short = date.toLocaleDateString("de-DE", { day: "numeric", month: "short", ...(sameYear ? {} : { year: "numeric" }) });
-    if (diff === 0) return "Heute";
+    const late = dueMs(t) <= Date.now();
+    if (diff === 0) return late ? "Überfällig · heute" : "Heute";
     if (diff === 1) return "Morgen";
     if (diff === -1) return "Gestern fällig";
     if (diff < -1) return `Überfällig · ${short}`;
     if (diff < 7) return date.toLocaleDateString("de-DE", { weekday: "long" });
     return date.toLocaleDateString("de-DE", { weekday: "short", ...{ day: "numeric", month: "short" }, ...(sameYear ? {} : { year: "numeric" }) });
   }
-  const isLate = t => t.due && !t.done && dayDiff(t.due) < 0;
+  const isLate = t => t.due && !t.done && dueMs(t) <= Date.now();
 
   function openPicker(inp) {
     try { if (inp.showPicker) { inp.showPicker(); return; } } catch (e) {}
     inp.focus(); inp.click();
   }
 
+  // --- Fenster von unten (allgemein) ---
+  function showSheet(backdrop) {
+    backdrop.hidden = false;
+    const box = backdrop.querySelector(".sheet");
+    box.scrollTop = 0;
+    if (box.animate) {
+      backdrop.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
+      box.animate([{ transform: "translateY(100%)" }, { transform: "translateY(0)" }],
+        { duration: 320, easing: "cubic-bezier(.2, .9, .3, 1)" });
+    }
+  }
+  function hideSheet(backdrop) {
+    if (backdrop.hidden) return;
+    if (document.activeElement && backdrop.contains(document.activeElement)) document.activeElement.blur();
+    const box = backdrop.querySelector(".sheet");
+    if (!box.animate) { backdrop.hidden = true; return; }
+    backdrop.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200 });
+    box.animate([{ transform: "translateY(0)" }, { transform: "translateY(100%)" }],
+      { duration: 220, easing: "ease-in" }).onfinish = () => { backdrop.hidden = true; };
+  }
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    document.querySelectorAll(".sheet-backdrop:not([hidden])").forEach(hideSheet);
+  });
+
+  // --- Deadline bearbeiten ---
+  const sheet = document.getElementById("sheet");
+  const sheetBox = sheet.querySelector(".sheet");
+  const sDate = document.getElementById("sDate");
+  const sTime = document.getElementById("sTime");
+  let editing = null;
+  const markEmpty = () => {
+    sDate.classList.toggle("empty", !sDate.value);
+    sTime.classList.toggle("empty", !sTime.value);
+  };
+  function openSheet(t) {
+    editing = t;
+    document.getElementById("sheetTodo").textContent = t.text;
+    sDate.value = t.due || "";
+    sTime.value = t.time || "";
+    markEmpty();
+    showSheet(sheet);
+  }
+  function closeSheet() {
+    editing = null;
+    hideSheet(sheet);
+  }
+  sDate.addEventListener("input", markEmpty);
+  sTime.addEventListener("input", markEmpty);
+  document.getElementById("sDateClr").addEventListener("click", () => { sDate.value = ""; markEmpty(); });
+  document.getElementById("sTimeClr").addEventListener("click", () => { sTime.value = ""; markEmpty(); });
+  document.getElementById("sCancel").addEventListener("click", closeSheet);
+  sheet.addEventListener("click", e => { if (e.target === sheet) closeSheet(); });
+  document.getElementById("sSave").addEventListener("click", () => {
+    if (editing) {
+      const time = sTime.value || null;
+      // Nur Uhrzeit ohne Datum: gilt für heute
+      editing.due = sDate.value || (time ? todayStr() : null);
+      editing.time = editing.due ? time : null;
+      save(); render();
+    }
+    closeSheet();
+  });
+
+  // --- Todo bearbeiten: Text, Notizen, Unteraufgaben ---
+  const detail = document.getElementById("detail");
+  const dTitle = document.getElementById("dTitle");
+  const dNotes = document.getElementById("dNotes");
+  const dSubs = document.getElementById("dSubs");
+  const dSubInput = document.getElementById("dSubInput");
+  let dTodo = null, dDraft = [];
+  function renderSubs() {
+    dSubs.innerHTML = "";
+    for (const sub of dDraft) {
+      const li = document.createElement("li");
+      if (sub.done) li.classList.add("done");
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.className = "check"; cb.checked = sub.done;
+      cb.addEventListener("change", () => { sub.done = cb.checked; renderSubs(); });
+      const tx = document.createElement("span");
+      tx.className = "sub-text"; tx.textContent = sub.text;
+      const del = document.createElement("button");
+      del.type = "button"; del.className = "sub-del"; del.textContent = "×"; del.title = "Unteraufgabe löschen";
+      del.addEventListener("click", () => { dDraft = dDraft.filter(x => x !== sub); renderSubs(); });
+      li.append(cb, tx, del);
+      dSubs.append(li);
+    }
+  }
+  function addSub() {
+    const v = dSubInput.value.trim();
+    if (!v) return;
+    dDraft.push({ id: Date.now() + Math.random(), text: v, done: false });
+    dSubInput.value = "";
+    renderSubs();
+  }
+  function openDetail(t) {
+    dTodo = t;
+    dTitle.value = t.text;
+    dNotes.value = t.notes || "";
+    dDraft = (t.subs || []).map(x => ({ ...x }));
+    dSubInput.value = "";
+    renderSubs();
+    showSheet(detail);
+  }
+  document.getElementById("dSubAdd").addEventListener("click", addSub);
+  dSubInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addSub(); } });
+  document.getElementById("dCancel").addEventListener("click", () => { dTodo = null; hideSheet(detail); });
+  detail.addEventListener("click", e => { if (e.target === detail) { dTodo = null; hideSheet(detail); } });
+  document.getElementById("dSave").addEventListener("click", () => {
+    if (dTodo) {
+      addSub();                                   // noch getippte Unteraufgabe mitnehmen
+      const title = dTitle.value.trim();
+      if (title) dTodo.text = title;
+      dTodo.notes = dNotes.value.trim();
+      dTodo.subs = dDraft;
+      save(); render();
+    }
+    dTodo = null;
+    hideSheet(detail);
+  });
+
+  // --- Löschen mit Rückgängig ---
+  const toast = document.getElementById("toast");
+  const toastBar = document.getElementById("toastBar");
+  let undoState = null, undoTimer = null;
+  function showUndo(t, index) {
+    undoState = { t, index };
+    document.getElementById("toastText").textContent = `„${t.text}“ gelöscht`;
+    clearTimeout(undoTimer);
+    const wasHidden = toast.hidden;
+    toast.hidden = false;
+    if (toast.animate && wasHidden) {
+      toast.animate([{ transform: "translate(-50%, 140%)" }, { transform: "translate(-50%, 0)" }],
+        { duration: 280, easing: "cubic-bezier(.2, .9, .3, 1)" });
+    }
+    toastBar.getAnimations?.().forEach(a => a.cancel());
+    toastBar.animate?.([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], { duration: 5000, easing: "linear" });
+    undoTimer = setTimeout(hideUndo, 5000);
+  }
+  function hideUndo() {
+    clearTimeout(undoTimer);
+    undoState = null;
+    if (toast.hidden) return;
+    if (!toast.animate) { toast.hidden = true; return; }
+    toast.animate([{ transform: "translate(-50%, 0)", opacity: 1 }, { transform: "translate(-50%, 140%)", opacity: 0 }],
+      { duration: 220, easing: "ease-in" }).onfinish = () => { if (!undoState) toast.hidden = true; };
+  }
+  document.getElementById("toastUndo").addEventListener("click", () => {
+    if (!undoState) return;
+    const { t, index } = undoState;
+    if (!todos.some(x => x.id === t.id)) todos.splice(Math.min(index, todos.length), 0, t);
+    save(); render();
+    hideUndo();
+  });
+  function deleteTodo(t, li, dir = 1, fromCurrent = false) {
+    const index = todos.findIndex(x => x.id === t.id);
+    if (index < 0) return;
+    todos.splice(index, 1);
+    save();
+    showUndo(t, index);
+    swipeOut(li, "delete", { dir, fromCurrent });
+  }
+  function completeTodo(t, li, fromCurrent = false) {
+    t.done = true; t.doneAt = Date.now();
+    save();
+    const allDone = todos.length > 0 && todos.every(x => x.done);
+    const cbRect = li.querySelector(".check").getBoundingClientRect();
+    if (filter !== "done") swipeOut(li, "done", { fromCurrent }); else render();
+    if (allDone) setTimeout(() => confetti(cbRect.left + cbRect.width / 2, cbRect.top + cbRect.height / 2), fromCurrent ? 150 : 350);
+  }
+
+  // Wisch-Animation nach rechts, wenn ein Todo abgehakt wird
+  function swipeOut(li, kind = "done", { dir = 1, fromCurrent = false } = {}) {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const bg = li.previousElementSibling && li.previousElementSibling.classList.contains("swipe-bg") ? li.previousElementSibling : null;
+    if (reduce || !li.animate) { bg && bg.remove(); render(); return; }
+    li.style.pointerEvents = "none";
+    li.classList.add(kind === "delete" ? "swiping-del" : "swiping");
+    const h = li.offsetHeight;
+    const out = `translateX(${dir * 108}%)`;
+    const slide = fromCurrent
+      // Mit dem Finger angeschoben: einfach weiter rausgleiten
+      ? li.animate([{ transform: li.style.transform || "translateX(0)", opacity: 1 }, { transform: out, opacity: 0 }],
+          { duration: 260, easing: "ease-in", fill: "forwards" })
+      : li.animate(
+          [
+            { transform: "translateX(0)", opacity: 1 },
+            { transform: `translateX(${-dir * 14}px)`, opacity: 1, offset: 0.18 },
+            { transform: out, opacity: 0 }
+          ],
+          { duration: 520, delay: 180, easing: "cubic-bezier(.5, 0, .75, 0)", fill: "forwards" }
+        );
+    slide.onfinish = () => {
+      if (bg) bg.remove();
+      const collapse = li.animate(
+        [
+          { height: h + "px", paddingTop: getComputedStyle(li).paddingTop, paddingBottom: getComputedStyle(li).paddingBottom },
+          { height: "0px", paddingTop: "0px", paddingBottom: "0px" }
+        ],
+        { duration: 220, easing: "ease-out", fill: "forwards" }
+      );
+      collapse.onfinish = render;
+    };
+  }
+
+  let gesture = null;          // läuft gerade Wischen/Ziehen?
+  let pendingRender = false;
   function render() {
-    let visible = todos.filter(t =>
-      filter === "all" ? true :
-      filter === "done" ? t.done :
-      filter === "late" ? isLate(t) : !t.done
-    );
-    if (sortByDue) {
+    if (gesture) { pendingRender = true; return; }
+    pendingRender = false;
+    let visible = todos.filter(t => filter === "done" ? t.done : !t.done);
+    // "Nach Deadline": offene Todos, früheste Deadline zuerst, ohne Deadline am Ende
+    if (filter === "due") {
       visible = [...visible].sort((a, b) => {
-        if (a.done !== b.done) return a.done ? 1 : -1;
         if (!a.due && !b.due) return 0;
         if (!a.due) return 1;
         if (!b.due) return -1;
-        return a.due.localeCompare(b.due);
+        return dueMs(a) - dueMs(b);
       });
     }
 
     list.innerHTML = "";
     for (const t of visible) {
       const li = document.createElement("li");
+      li.dataset.id = t.id;
       if (t.done) li.classList.add("done");
       if (isLate(t)) li.classList.add("overdue");
 
@@ -418,51 +903,85 @@
       cb.type = "checkbox";
       cb.className = "check";
       cb.checked = t.done;
-      cb.addEventListener("change", () => { t.done = cb.checked; save(); render(); });
+      cb.addEventListener("change", () => {
+        if (cb.checked) { completeTodo(t, li); return; }
+        t.done = false; delete t.doneAt;
+        save(); render();
+      });
 
       const span = document.createElement("span");
       span.className = "text";
-      span.textContent = t.text;
+      const title = document.createElement("span");
+      title.className = "title";
+      title.textContent = t.text;
+      span.append(title);
+      span.title = "Antippen zum Bearbeiten";
+      span.addEventListener("click", () => openDetail(t));
+      const subs = t.subs || [];
+      if (subs.length || t.notes) {
+        const meta = document.createElement("small");
+        meta.className = "meta";
+        if (subs.length) {
+          const p = document.createElement("span");
+          p.textContent = `☑ ${subs.filter(x => x.done).length}/${subs.length}`;
+          meta.append(p);
+        }
+        if (t.notes) {
+          const n = document.createElement("span");
+          n.textContent = "📝 Notiz";
+          meta.append(n);
+        }
+        span.append(meta);
+      }
+      if (t.done && t.doneAt) {
+        const gone = document.createElement("small");
+        gone.className = "gone";
+        gone.dataset.doneAt = t.doneAt;
+        span.append(gone);
+      }
 
-      // Deadline-Chip (klickbar zum Ändern)
-      const due = document.createElement("label");
+      // Deadline-Chip: Antippen öffnet das Bearbeiten-Fenster, ✕ entfernt alles
+      const due = document.createElement("span");
       due.className = "due";
+      due.title = "Deadline bearbeiten";
+      due.addEventListener("click", () => openSheet(t));
       const label = document.createElement("span");
-      const picker = document.createElement("input");
-      picker.type = "date";
-      picker.value = t.due || "";
-      picker.title = "Deadline ändern";
-      picker.addEventListener("click", e => { e.preventDefault(); openPicker(picker); });
-      picker.addEventListener("change", () => { t.due = picker.value || null; save(); render(); });
+      due.append(label);
 
       if (t.due) {
-        const diff = dayDiff(t.due);
-        if (!t.done && diff < 0) due.classList.add("late");
-        else if (!t.done && diff === 0) due.classList.add("today");
-        label.textContent = "📅 " + formatDue(t.due);
-        due.append(picker, label);
+        const late = isLate(t);
+        if (late) due.classList.add("late");
+        else if (!t.done && dayDiff(t.due) === 0) due.classList.add("today");
+
+        // Weniger als ein Tag übrig: nur noch der Live-Timer
+        if (!t.done && !late && dueMs(t) - Date.now() <= 24 * 3600 * 1000) {
+          due.classList.remove("today");
+          due.classList.add("timing");
+          label.className = "timer";
+          label.dataset.end = dueMs(t);
+        } else {
+          label.textContent = "📅 " + formatDue(t) + (t.time ? `, ${fmtTime(t.time)} Uhr` : "");
+        }
         const x = document.createElement("span");
         x.className = "x";
         x.textContent = "✕";
         x.title = "Deadline entfernen";
-        x.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); t.due = null; save(); render(); });
+        x.addEventListener("click", e => { e.stopPropagation(); t.due = null; t.time = null; save(); render(); });
         due.append(x);
       } else {
         due.classList.add("none");
         label.textContent = "📅 Keine Deadline";
-        picker.title = "Deadline festlegen";
-        due.append(picker, label);
+        due.title = "Deadline festlegen";
       }
 
       const del = document.createElement("button");
       del.className = "del";
       del.title = "Löschen";
       del.textContent = "×";
-      del.addEventListener("click", () => {
-        todos = todos.filter(x => x.id !== t.id); save(); render();
-      });
+      del.addEventListener("click", () => deleteTodo(t, li));
 
       li.append(cb, span, due, del);
+      attachGestures(li, t);
       list.appendChild(li);
     }
 
@@ -470,8 +989,7 @@
     empty.hidden = visible.length !== 0;
     empty.textContent = todos.length === 0
       ? "Noch nichts zu tun – trag oben dein erstes Todo ein."
-      : filter === "done" ? "Noch nichts erledigt."
-      : filter === "late" ? "Nichts überfällig. 👍"
+      : filter === "done" ? (quote || pickQuote())
       : "Alles erledigt! 🎉";
 
     const open = todos.filter(t => !t.done).length;
@@ -480,40 +998,474 @@
       ? "Leere Liste"
       : `${open} offen · ${todos.length - open} erledigt` + (late ? ` · ${late} überfällig` : "");
 
-    sortBtn.classList.toggle("active", sortByDue);
+    updateCountdowns();
+    updateBadge();
   }
 
-  dateInput.addEventListener("input", () => dateInput.classList.toggle("empty", !dateInput.value));
+  // --- Gesten: wischen (rechts erledigt, links löschen) und lange drücken zum Sortieren ---
+  let suppressClickUntil = 0;
+  list.addEventListener("click", e => {
+    if (Date.now() < suppressClickUntil) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  document.addEventListener("touchmove", e => { if (gesture) e.preventDefault(); }, { passive: false });
+  list.addEventListener("contextmenu", e => { if (gesture || e.target.closest("li")) e.preventDefault(); });
+
+  function attachGestures(li, t) {
+    let sx = 0, sy = 0, pid = null, state = null, lpTimer = null, dx = 0, bg = null;
+    const threshold = () => Math.min(120, li.offsetWidth * 0.3);
+
+    li.addEventListener("pointerdown", e => {
+      if (e.button !== 0 || gesture || li.classList.contains("swiping") || li.classList.contains("swiping-del")) return;
+      sx = e.clientX; sy = e.clientY; pid = e.pointerId; state = "pending"; dx = 0;
+      if (filter === "open" && !t.done) {
+        lpTimer = setTimeout(() => {
+          if (state !== "pending") return;
+          state = "drag"; gesture = "drag";
+          try { li.setPointerCapture(pid); } catch (err) {}
+          startDrag(li, sy);
+        }, 420);
+      }
+    });
+
+    li.addEventListener("pointermove", e => {
+      if (e.pointerId !== pid || !state) return;
+      const mx = e.clientX - sx, my = e.clientY - sy;
+      if (state === "pending") {
+        if (Math.abs(mx) > 10 && Math.abs(mx) > Math.abs(my) * 1.2) {
+          clearTimeout(lpTimer);
+          state = "swipe"; gesture = "swipe";
+          try { li.setPointerCapture(pid); } catch (err) {}
+          bg = document.createElement("div");
+          bg.className = "swipe-bg";
+          bg.style.top = li.offsetTop + "px";
+          bg.style.height = li.offsetHeight + "px";
+          bg.innerHTML = `<span class="l">${t.done ? "↺ Wieder offen" : "✓ Erledigt"}</span><span class="r">Löschen 🗑</span>`;
+          li.before(bg);
+        } else if (Math.abs(my) > 10 || Math.abs(mx) > 10) {
+          clearTimeout(lpTimer); state = null;   // Scrollen
+          return;
+        }
+      }
+      if (state === "swipe") {
+        dx = mx;
+        li.style.transform = `translateX(${dx}px)`;
+        bg.classList.toggle("right", dx > 0);
+        bg.classList.toggle("left", dx < 0);
+        bg.classList.toggle("armed", Math.abs(dx) > threshold());
+      } else if (state === "drag") {
+        moveDrag(e.clientY);
+      }
+    });
+
+    const finish = (cancelled) => {
+      clearTimeout(lpTimer);
+      const was = state;
+      state = null; pid = null;
+      if (was === "swipe") {
+        suppressClickUntil = Date.now() + 400;
+        gesture = null;
+        if (!cancelled && dx > threshold()) {
+          if (!t.done) completeTodo(t, li, true);
+          else { t.done = false; delete t.doneAt; save(); swipeOut(li, "delete", { fromCurrent: true }); }
+        } else if (!cancelled && dx < -threshold()) {
+          deleteTodo(t, li, -1, true);
+        } else {
+          // Zurückschnappen
+          const back = li.animate([{ transform: `translateX(${dx}px)` }, { transform: "translateX(0)" }],
+            { duration: 260, easing: "cubic-bezier(.3, 1.4, .5, 1)" });
+          li.style.transform = "";
+          back.onfinish = () => { bg && bg.remove(); if (pendingRender) render(); };
+        }
+      } else if (was === "drag") {
+        suppressClickUntil = Date.now() + 400;
+        endDrag();
+      }
+    };
+    li.addEventListener("pointerup", e => { if (e.pointerId === pid) finish(false); });
+    li.addEventListener("pointercancel", e => { if (e.pointerId === pid) finish(true); });
+  }
+
+  // Ziehen zum Sortieren
+  let drag = null;
+  function startDrag(li, y) {
+    const rect = li.getBoundingClientRect();
+    const ph = document.createElement("li");
+    ph.className = "placeholder";
+    ph.style.height = rect.height - 8 + "px";
+    li.before(ph);
+    Object.assign(li.style, { position: "fixed", left: rect.left + "px", top: rect.top + "px", width: rect.width + "px", zIndex: 40, margin: 0 });
+    li.classList.add("dragging");
+    drag = { li, ph, offset: y - rect.top };
+    if (navigator.vibrate) { try { navigator.vibrate(12); } catch (e) {} }
+  }
+  function moveDrag(y) {
+    if (!drag) return;
+    drag.li.style.top = y - drag.offset + "px";
+    const items = [...list.children].filter(el => el !== drag.li && el !== drag.ph && el.tagName === "LI");
+    let before = null;
+    for (const el of items) {
+      const r = el.getBoundingClientRect();
+      if (y < r.top + r.height / 2) { before = el; break; }
+    }
+    let next = drag.ph.nextElementSibling;
+    while (next && (next === drag.li || next.tagName !== "LI")) next = next.nextElementSibling;
+    if (next !== before) {
+      // FLIP: andere Einträge weich nachrutschen lassen
+      const first = new Map(items.map(el => [el, el.getBoundingClientRect().top]));
+      list.insertBefore(drag.ph, before);
+      for (const el of items) {
+        const d = first.get(el) - el.getBoundingClientRect().top;
+        if (d) el.animate([{ transform: `translateY(${d}px)` }, { transform: "translateY(0)" }], { duration: 180, easing: "ease-out" });
+      }
+    }
+    // Am Rand automatisch scrollen
+    if (y < 70) window.scrollBy(0, -10);
+    else if (y > window.innerHeight - 70) window.scrollBy(0, 10);
+  }
+  function endDrag() {
+    if (!drag) { gesture = null; return; }
+    const { li, ph } = drag;
+    const target = ph.getBoundingClientRect();
+    const anim = li.animate([{ top: li.style.top }, { top: target.top - 4 + "px" }], { duration: 160, easing: "ease-out", fill: "forwards" });
+    anim.onfinish = () => {
+      const ids = [...list.children]
+        .map(el => el === ph ? li.dataset.id : (el.tagName === "LI" && el !== li ? el.dataset.id : null))
+        .filter(Boolean);
+      const byId = new Map(todos.map(t => [String(t.id), t]));
+      const ordered = ids.map(id => byId.get(id)).filter(Boolean);
+      const rest = todos.filter(t => !ids.includes(String(t.id)));
+      todos = [...ordered, ...rest];
+      save();
+      drag = null; gesture = null;
+      render();
+    };
+  }
+
+  // --- Schnelleingabe: "Zahnarzt morgen 15 Uhr" ---
+  const WEEKDAYS = ["sonntag", "montag", "dienstag", "mittwoch", "donnerstag", "freitag", "samstag"];
+  const NUMWORDS = { ein: 1, einem: 1, einer: 1, eine: 1, zwei: 2, drei: 3, vier: 4, fünf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10 };
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  function parseQuick(raw) {
+    let s = " " + raw + " ";
+    let due = null, time = null;
+    const end = "(?=[\\s,.!?;]|$)";
+    const take = (re, fn) => {
+      const m = s.match(re);
+      if (!m) return false;
+      if (fn(m) === false) return false;
+      s = s.slice(0, m.index) + " " + s.slice(m.index + m[0].length);
+      return true;
+    };
+    const base = new Date(); base.setHours(0, 0, 0, 0);
+    const addDays = n => { const d = new Date(base); d.setDate(d.getDate() + n); return ymd(d); };
+
+    // Datum
+    take(new RegExp(`\\s(?:(?:am|bis|für)\\s)?(heute|übermorgen|morgen)${end}`, "i"), m => {
+      due = addDays({ heute: 0, morgen: 1, übermorgen: 2 }[m[1].toLowerCase()]);
+    }) ||
+    take(new RegExp(`\\s(?:(?:am|bis|zum|den)\\s)?(\\d{1,2})\\.(\\d{1,2})\\.(\\d{2,4})?${end}`, "i"), m => {
+      const dd = +m[1], mm = +m[2];
+      let yy = m[3] ? +m[3] : base.getFullYear();
+      if (yy < 100) yy += 2000;
+      const d = new Date(yy, mm - 1, dd);
+      if (d.getMonth() !== mm - 1 || d.getDate() !== dd) return false;
+      if (!m[3] && d < base) d.setFullYear(d.getFullYear() + 1);
+      due = ymd(d);
+    }) ||
+    take(new RegExp(`\\s(?:(?:am|bis|für|nächsten|kommenden)\\s)?(${WEEKDAYS.join("|")})${end}`, "i"), m => {
+      const idx = WEEKDAYS.indexOf(m[1].toLowerCase());
+      due = addDays(((idx - base.getDay() + 7) % 7) || 7);
+    }) ||
+    take(new RegExp(`\\sin\\s(\\d+|${Object.keys(NUMWORDS).join("|")})\\s(tag|tagen|woche|wochen)${end}`, "i"), m => {
+      const n = /^\d+$/.test(m[1]) ? +m[1] : NUMWORDS[m[1].toLowerCase()];
+      due = addDays(n * (m[2].toLowerCase().startsWith("woche") ? 7 : 1));
+    });
+
+    // Uhrzeit
+    const setTime = (h, m) => {
+      if (h > 23 || m > 59) return false;
+      time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    };
+    const pre = "(?:(?:um|bis|ab|gegen)\\s)?";
+    take(new RegExp(`\\s${pre}(\\d{1,2}):(\\d{2})(?:\\s?uhr)?${end}`, "i"), m => setTime(+m[1], +m[2])) ||
+    take(new RegExp(`\\s${pre}(\\d{1,2})\\.(\\d{2})\\s?uhr${end}`, "i"), m => setTime(+m[1], +m[2])) ||
+    take(new RegExp(`\\s${pre}(\\d{1,2})\\s?uhr${end}`, "i"), m => setTime(+m[1], 0)) ||
+    take(new RegExp(`\\s(?:um|gegen)\\s(\\d{1,2})${end}`, "i"), m => setTime(+m[1], 0));
+
+    if (!due && !time) return null;
+    if (time && !due) {
+      // Nur Uhrzeit: heute – oder morgen, falls die Uhrzeit heute schon vorbei ist
+      const [h, mi] = time.split(":").map(Number);
+      const now = new Date();
+      due = (h * 60 + mi <= now.getHours() * 60 + now.getMinutes()) ? addDays(1) : addDays(0);
+    }
+    const text = s.replace(/\s+/g, " ").replace(/\s([,.!?;])/g, "$1").replace(/^[\s,;:–-]+|[\s,;:–-]+$/g, "").trim();
+    return { text: text || raw.trim(), due, time };
+  }
+  const quickHint = document.getElementById("quickHint");
+  const quickHintText = document.getElementById("quickHintText");
+  let quickIgnored = false;
+  function updateQuickHint() {
+    const manual = dateInput.value || timeInput.value;
+    const q = !quickIgnored && !manual ? parseQuick(input.value) : null;
+    if (!q) { quickHint.hidden = true; return null; }
+    quickHintText.textContent = `✨ Erkannt: ${formatDue(q).replace("Überfällig · heute", "Heute")}${q.time ? `, ${fmtTime(q.time)} Uhr` : ""}  →  „${q.text}“`;
+    quickHint.hidden = false;
+    return q;
+  }
+  input.addEventListener("input", () => { if (!input.value.trim()) quickIgnored = false; updateQuickHint(); });
+  document.getElementById("quickIgnore").addEventListener("click", () => { quickIgnored = true; updateQuickHint(); input.focus(); });
+
+  // --- Konfetti, wenn alles erledigt ist ---
+  function confetti(x, y) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const c = document.createElement("canvas");
+    c.className = "confetti";
+    const dpr = window.devicePixelRatio || 1;
+    c.width = innerWidth * dpr; c.height = innerHeight * dpr;
+    document.body.append(c);
+    const ctx = c.getContext("2d");
+    ctx.scale(dpr, dpr);
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+    const colors = [accent, "#f4b400", "#34a853", "#4285f4", "#e91e63", "#9c27b0", "#00bcd4"];
+    const parts = [];
+    const burst = (bx, by, n, spread, power) => {
+      for (let i = 0; i < n; i++) {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * spread;
+        const v = power * (0.55 + Math.random() * 0.6);
+        parts.push({
+          x: bx, y: by, vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+          w: 6 + Math.random() * 6, h: 3 + Math.random() * 5,
+          rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.4,
+          color: colors[(Math.random() * colors.length) | 0], round: Math.random() < 0.3
+        });
+      }
+    };
+    burst(x, y, 110, Math.PI * 1.1, 15);
+    burst(innerWidth * 0.15, innerHeight + 10, 60, 0.7, 19);
+    burst(innerWidth * 0.85, innerHeight + 10, 60, 0.7, 19);
+    const start = performance.now();
+    (function frame(now) {
+      const tt = now - start;
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      for (const p of parts) {
+        p.vy += 0.32; p.vx *= 0.985; p.vy *= 0.985;
+        p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, 1 - Math.max(0, tt - 1800) / 900);
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        if (p.round) { ctx.beginPath(); ctx.arc(0, 0, p.h, 0, Math.PI * 2); ctx.fill(); }
+        else ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * (0.4 + Math.abs(Math.sin(p.rot)) * 0.6));
+        ctx.restore();
+      }
+      if (tt < 2700) requestAnimationFrame(frame); else c.remove();
+    })(start);
+  }
+
+  // --- Einstellungen: Akzentfarbe & Zahl am App-Icon ---
+  const ACCENTS = [
+    ["orange", "#d9622b", "Orange"], ["blue", "#2f6fde", "Blau"], ["green", "#2e8b57", "Grün"],
+    ["purple", "#7a4fd6", "Lila"], ["pink", "#d6407a", "Pink"], ["teal", "#138a8a", "Türkis"]
+  ];
+  const settings = document.getElementById("settings");
+  const swatches = document.getElementById("swatches");
+  let accent = document.documentElement.dataset.accent || "orange";
+  function applyAccent(name) {
+    accent = name;
+    if (name === "orange") delete document.documentElement.dataset.accent;
+    else document.documentElement.dataset.accent = name;
+    try { localStorage.setItem("todos-accent", name); } catch (e) {}
+    swatches.querySelectorAll(".swatch").forEach(b => b.classList.toggle("active", b.dataset.accent === name));
+  }
+  for (const [name, color, label] of ACCENTS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "swatch"; b.dataset.accent = name;
+    b.style.background = color; b.title = label; b.setAttribute("aria-label", label);
+    b.addEventListener("click", () => applyAccent(name));
+    swatches.append(b);
+  }
+  applyAccent(accent);
+
+  const BADGE_KEY = "todos-badge";
+  let badgeMode = "off";
+  try { badgeMode = localStorage.getItem(BADGE_KEY) || "off"; } catch (e) {}
+  const badgeHint = document.getElementById("badgeHint");
+  const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  function updateBadge() {
+    if (!("setAppBadge" in navigator)) return;
+    let n = 0;
+    if (badgeMode === "open") n = todos.filter(t => !t.done).length;
+    else if (badgeMode === "due") n = todos.filter(t => !t.done && t.due && (isLate(t) || dayDiff(t.due) <= 0)).length;
+    try {
+      if (n > 0) navigator.setAppBadge(n).catch(() => {});
+      else (navigator.clearAppBadge ? navigator.clearAppBadge() : navigator.setAppBadge(0)).catch(() => {});
+    } catch (e) {}
+  }
+  function showBadgeState() {
+    document.querySelectorAll("[data-badge]").forEach(b => b.classList.toggle("active", b.dataset.badge === badgeMode));
+    let hint = "";
+    if (badgeMode !== "off") {
+      if (!("setAppBadge" in navigator) || !isStandalone()) hint = "Funktioniert nur in der App, die du über „Zum Home-Bildschirm“ geöffnet hast.";
+      else if ("Notification" in window && Notification.permission === "denied") hint = "Mitteilungen sind für die App ausgeschaltet. Erlaube sie unter Einstellungen → Mitteilungen → Todos, damit die Zahl erscheint.";
+      else hint = badgeMode === "open" ? "Zeigt die Zahl aller offenen Todos." : "Zeigt die Zahl der Todos, die heute fällig oder überfällig sind.";
+    }
+    badgeHint.textContent = hint;
+  }
+  document.querySelectorAll("[data-badge]").forEach(b => b.addEventListener("click", async () => {
+    badgeMode = b.dataset.badge;
+    try { localStorage.setItem(BADGE_KEY, badgeMode); } catch (e) {}
+    // iPhone: Die Zahl am Icon braucht die Erlaubnis für Mitteilungen
+    if (badgeMode !== "off" && "Notification" in window && Notification.permission === "default") {
+      try { await Notification.requestPermission(); } catch (e) {}
+    }
+    showBadgeState();
+    updateBadge();
+  }));
+  document.getElementById("openSettings").addEventListener("click", () => { showBadgeState(); showSheet(settings); });
+  document.getElementById("setClose").addEventListener("click", () => hideSheet(settings));
+  settings.addEventListener("click", e => { if (e.target === settings) hideSheet(settings); });
+
+  // Leeres Feld: Button wackelt, Feld leuchtet rot auf
+  const addBtn = document.querySelector("button.add");
+  function emptyWarning() {
+    input.value = "";
+    if (navigator.vibrate) { try { navigator.vibrate([30, 40, 30]); } catch (e) {} }
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      input.classList.add("invalid"); setTimeout(() => input.classList.remove("invalid"), 900); return;
+    }
+    addBtn.getAnimations().forEach(a => a.cancel());
+    addBtn.animate(
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-8px) rotate(-2deg)" },
+        { transform: "translateX(7px) rotate(2deg)" },
+        { transform: "translateX(-6px) rotate(-1.5deg)" },
+        { transform: "translateX(5px) rotate(1deg)" },
+        { transform: "translateX(-3px)" },
+        { transform: "translateX(0)" }
+      ],
+      { duration: 450, easing: "ease-out" }
+    );
+    input.getAnimations().forEach(a => a.cancel());
+    const red = getComputedStyle(document.documentElement).getPropertyValue("--late").trim();
+    input.animate(
+      [
+        { borderColor: red, boxShadow: `0 0 0 0 ${red}66`, backgroundColor: `color-mix(in srgb, ${red} 12%, var(--card))` },
+        { borderColor: red, boxShadow: `0 0 0 6px ${red}33`, backgroundColor: `color-mix(in srgb, ${red} 12%, var(--card))`, offset: 0.35 },
+        { borderColor: red, boxShadow: `0 0 0 0 ${red}00`, offset: 0.75 },
+        {}
+      ],
+      { duration: 1100, easing: "ease-out" }
+    );
+  }
+
+  dateInput.addEventListener("input", () => { dateInput.classList.toggle("empty", !dateInput.value); updateQuickHint(); });
+  timeInput.addEventListener("input", () => { timeInput.classList.toggle("empty", !timeInput.value); updateQuickHint(); });
 
   document.getElementById("form").addEventListener("submit", e => {
     e.preventDefault();
     const text = input.value.trim();
-    if (!text) return;
-    todos.unshift({ id: Date.now() + Math.random(), text, done: false, due: dateInput.value || null });
+    if (!text) { emptyWarning(); return; }
+    // Manuell gewähltes Datum/Uhrzeit hat Vorrang, sonst Erkennung aus dem Text
+    let finalText = text;
+    let due = dateInput.value || (timeInput.value ? todayStr() : null);
+    let time = due ? (timeInput.value || null) : null;
+    const q = updateQuickHint();
+    if (q && !due) { finalText = q.text; due = q.due; time = q.time; }
+    todos.unshift({ id: Date.now() + Math.random(), text: finalText, done: false, due, time });
+    quickIgnored = false; quickHint.hidden = true;
     input.value = "";
     dateInput.value = "";
+    timeInput.value = "";
     dateInput.classList.add("empty");
+    timeInput.classList.add("empty");
     input.focus();
     save(); render();
   });
 
+  // Motivationssprüche für den leeren "Erledigt"-Reiter – jedes Mal ein neuer
+  const QUOTES = [
+    "Fang mit dem Kleinsten an – der erste Haken zieht die anderen nach. ✨",
+    "Zwei Minuten reichen oft schon. Leg einfach los! ⏱️",
+    "Erledigt fühlt sich besser an als perfekt. 💪",
+    "Heute ist ein guter Tag, um einen Haken zu setzen. ☀️",
+    "Ein Schritt nach dem anderen – du schaffst das. 👣",
+    "Nicht nachdenken, anfangen. Der Rest kommt von allein. 🚀",
+    "Jede große Sache beginnt mit einer kleinen Aufgabe. 🌱",
+    "Dein zukünftiges Ich wird dir danken. 🙌",
+    "Fünf Minuten Fokus – mehr braucht der Anfang nicht. 🎯",
+    "Hier ist noch Platz für deinen ersten Erfolg heute. 🏆",
+    "Motivation kommt beim Machen, nicht beim Warten. ⚡",
+    "Such dir eine Sache aus und bring sie zu Ende. ✅",
+    "Kleine Fortschritte sind auch Fortschritte. 📈",
+    "Die Liste wird nicht kürzer, wenn man sie nur anschaut. 😉",
+    "Mach heute etwas, worauf du morgen stolz bist. 🌟",
+    "Ein Haken hier sähe richtig gut aus. 👀",
+    "Du hast schon Schwierigeres geschafft. Los geht's! 🔥",
+    "Erst die Aufgabe, dann das gute Gefühl. 😌",
+    "Einfach anfangen – Perfektion kann warten. 🛠️",
+    "Wer anfängt, ist schon halb fertig. 🏁",
+    "Konzentrier dich auf das Nächste, nicht auf alles. 🧭",
+    "Jeder erledigte Punkt macht den Kopf ein bisschen freier. 🧠",
+    "Heute zählt, was du tust – nicht, was du planst. 📌",
+    "Noch leer hier – Zeit, das zu ändern! 💥",
+    "Schnapp dir die einfachste Aufgabe und gönn dir den ersten Haken. 🍀",
+    "Klein anfangen ist immer noch anfangen. 🐢",
+    "Stell dir vor, wie gut sich der Haken gleich anfühlt. 😎",
+    "Der beste Zeitpunkt ist jetzt. ⏰",
+    "Du bist näher am Ziel, als du denkst. 🗺️",
+    "Abhaken ist das schönste Geräusch – auch wenn man es nicht hört. 🎶"
+  ];
+  let quote = "";
+  function pickQuote() {
+    let next;
+    do { next = QUOTES[Math.floor(Math.random() * QUOTES.length)]; } while (next === quote && QUOTES.length > 1);
+    return (quote = next);
+  }
+
   document.querySelectorAll("[data-filter]").forEach(btn => {
     btn.addEventListener("click", () => {
+      if (btn.dataset.filter === "done") pickQuote();
       filter = btn.dataset.filter;
       document.querySelectorAll("[data-filter]").forEach(b => b.classList.toggle("active", b === btn));
       render();
     });
   });
 
-  sortBtn.addEventListener("click", () => {
-    sortByDue = !sortByDue;
-    try { localStorage.setItem(SORT_KEY, sortByDue ? "1" : "0"); } catch (e) {}
-    render();
-  });
 
-  document.getElementById("clear").addEventListener("click", () => {
-    todos = todos.filter(t => !t.done); save(); render();
-  });
+  // --- Erledigte nach 3 Minuten automatisch löschen ---
+  const AUTO_DELETE_MS = 3 * 60 * 1000;
+  function purgeDone() {
+    const now = Date.now();
+    let changed = false;
+    for (const t of todos) if (t.done && !t.doneAt) { t.doneAt = now; changed = true; }
+    const before = todos.length;
+    todos = todos.filter(t => !(t.done && now - t.doneAt >= AUTO_DELETE_MS));
+    if (todos.length !== before) changed = true;
+    if (changed) save();
+    return todos.length !== before;
+  }
+  function updateCountdowns() {
+    const now = Date.now();
+    let expired = false;
+    document.querySelectorAll(".timer[data-end]").forEach(el => {
+      const left = Number(el.dataset.end) - now;
+      if (left <= 0) { expired = true; return; }
+      const h = Math.floor(left / 3600000), m = Math.floor((left % 3600000) / 60000), sec = Math.floor((left % 60000) / 1000);
+      el.textContent = `⏳ noch ${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+      const chip = el.closest(".due");
+      chip.classList.toggle("urgent", left < 5 * 3600000);
+      chip.classList.toggle("pulse", left < 3600000);
+    });
+    if (expired) { setTimeout(render, 0); return; }
+    document.querySelectorAll(".gone[data-done-at]").forEach(el => {
+      const left = Math.max(0, AUTO_DELETE_MS - (now - Number(el.dataset.doneAt)));
+      const m = Math.floor(left / 60000), sec = Math.floor((left % 60000) / 1000);
+      el.textContent = `Wird in ${m}:${String(sec).padStart(2, "0")} gelöscht`;
+    });
+  }
+  setInterval(() => { if (purgeDone()) render(); else updateCountdowns(); }, 1000);
 
   // Um Mitternacht "Heute/Morgen/Überfällig" aktualisieren
   let lastDay = todayStr();
@@ -549,7 +1501,7 @@
       const ids = new Set(todos.map(t => t.id));
       const fresh = incoming
         .filter(t => t && typeof t.text === "string" && !ids.has(t.id))
-        .map(t => ({ id: t.id ?? Date.now() + Math.random(), text: t.text, done: !!t.done, due: t.due || null }));
+        .map(t => ({ id: t.id ?? Date.now() + Math.random(), text: t.text, done: !!t.done, due: t.due || null, time: t.time || null, notes: t.notes || "", subs: Array.isArray(t.subs) ? t.subs : [] }));
       todos = [...todos, ...fresh];
       save(); render();
       alert(fresh.length ? `${fresh.length} Todo(s) importiert.` : "Alles schon vorhanden – nichts Neues importiert.");
@@ -560,7 +1512,14 @@
 
   // --- Hell / Auto / Dunkel ---
   const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
+  const themeBox = document.querySelector(".theme");
+  const thumb = themeBox.querySelector(".thumb");
+  function moveThumb(mode) {
+    const btn = themeBox.querySelector(`[data-theme-btn="${mode}"]`);
+    if (btn) thumb.style.transform = `translateX(${btn.offsetLeft}px)`;
+  }
   function applyTheme(mode) {
+    moveThumb(mode);
     document.documentElement.dataset.theme = mode;
     // Statusleiste/Browserleiste passend einfärben
     themeMetas.forEach(m => m.setAttribute("content", mode === "dark" ? "#1b1a18" : "#f4f1ea"));
@@ -571,54 +1530,129 @@
     });
   }
   // Wellenförmige Kante, die beim Herunterlaufen hin- und herschwappt
-  function waveFrames(steps = 70, points = 72) {
-    const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  // Wellenförmiger Kreis, der sich vom Button aus in alle Richtungen ausbreitet
+  // Wellenförmiger Kreis vom Button aus, mit Wassertropfen, die vor der Welle herspritzen
+  const canPathClip = window.CSS && CSS.supports && CSS.supports("clip-path", 'path("M0 0 L1 0 L1 1 Z")');
+  function rippleFrames(cx, cy, steps = 90, points = 120) {
+    const W = window.innerWidth, H = window.innerHeight;
+    const maxR = Math.max(Math.hypot(cx, cy), Math.hypot(W - cx, cy), Math.hypot(cx, H - cy), Math.hypot(W - cx, H - cy));
+    const ease = t => 1 - Math.pow(1 - t, 2);            // zügig los, sanft auslaufen
+
+    // Tropfen spritzen vor allem in Richtung Bildschirm (vom Button weg): feste Zufallswerte, damit alle Frames zusammenpassen
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const toCenter = Math.atan2(H / 2 - cy, W / 2 - cx);
+    const COUNT = 160;
+    const drops = Array.from({ length: COUNT }, (_, i) => ({
+      // gleichmäßig über einen breiten Fächer verteilt, mit etwas Zufall
+      angle: toCenter + ((i + rnd()) / COUNT - 0.5) * Math.PI * 1.8,
+      side: i % 2 ? 1 : -1,                               // abwechselnd vor (+1) und hinter (−1) der Welle
+      lead: 6 + rnd() * 60,                               // Abstand zur Wellenkante
+      size: 1.2 + rnd() * 3.6,                            // kleine Tropfen
+      start: 0.02 + rnd() * 0.5,                          // wann er losspritzt
+      life: 0.25 + rnd() * 0.3,                           // wie lange er sichtbar ist
+      drift: (rnd() - 0.5) * 0.25                         // leicht seitlich
+    }));
+
     const frames = [];
     for (let f = 0; f <= steps; f++) {
       const t = f / steps;
-      const amp = 1 + 4 * Math.sin(Math.PI * t);       // Welle ist in der Mitte am stärksten
-      const base = -10 + ease(t) * 120;                   // von oberhalb bis unterhalb des Bildschirms
-      const phase = t * Math.PI * 4;                      // Welle läuft seitwärts mit
-      const pts = ["0% 0%", "100% 0%"];
-      for (let i = points; i >= 0; i--) {
-        const x = (i / points) * 100;
-        const y = base
-          + amp * Math.sin((x / 100) * Math.PI * 2.4 + phase)
-          + amp * 0.3 * Math.sin((x / 100) * Math.PI * 4.2 - phase * 1.4);
-        pts.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`);
+      const R = ease(t) * maxR * 1.15;                     // am Ende sicher über alle Ecken hinaus
+      const amp = Math.min(R * 0.12, 28) * Math.sin(Math.PI * Math.min(1, t * 1.1)); // Wellenhöhe, am Ende flach
+      const phase = t * Math.PI * 6;                       // Welle läuft um den Kreis herum
+      const edge = a => Math.max(0, R + amp * Math.sin(a * 7 + phase) + amp * 0.45 * Math.sin(a * 11 - phase * 1.3));
+
+      const pts = [];
+      for (let i = 0; i < points; i++) {
+        const a = (i / points) * Math.PI * 2;
+        const r = edge(a);
+        pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
       }
-      frames.push(`polygon(${pts.join(", ")})`);
+
+      if (!canPathClip) {
+        frames.push(`polygon(${pts.map(([x, y]) => `${x.toFixed(1)}px ${y.toFixed(1)}px`).join(", ")})`);
+        continue;
+      }
+
+      let d = "M" + pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(" L") + " Z";
+      for (const p of drops) {
+        const k = (t - p.start) / p.life;                  // 0..1 Lebenszeit des Tropfens
+        let vis = k <= 0 || k >= 1 ? 0 : Math.sin(Math.PI * k);
+        const a = p.angle + p.drift * k;
+        const dist = edge(p.angle) + p.side * p.lead * (0.4 + k * 1.2);
+        if (dist < 12) vis = 0;                            // nicht direkt am Button
+        const r = +(p.size * vis).toFixed(2);
+        const x = cx + dist * Math.cos(a), y = cy + dist * Math.sin(a);
+        // Vor der Welle: Tropfen im neuen Theme. Hinter der Welle: Tropfen im alten Theme
+        // (entgegengesetzte Drehrichtung schneidet ein Loch in die Fläche).
+        const sw = p.side > 0 ? 1 : 0;
+        d += ` M${(x - r).toFixed(1)} ${y.toFixed(1)} a${r} ${r} 0 1 ${sw} ${(2 * r).toFixed(2)} 0 a${r} ${r} 0 1 ${sw} ${(-2 * r).toFixed(2)} 0 Z`;
+      }
+      frames.push(`path("${d}")`);
     }
     return frames;
   }
   let themeMode = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
   applyTheme(themeMode);
+  requestAnimationFrame(() => requestAnimationFrame(() => themeBox.classList.add("ready")));
   document.querySelectorAll("[data-theme-btn]").forEach(b => {
     b.setAttribute("role", "radio");
     b.addEventListener("click", () => {
       if (b.dataset.themeBtn === themeMode) return;
       themeMode = b.dataset.themeBtn;
       try { localStorage.setItem("todos-theme", themeMode); } catch (e) {}
+      moveThumb(themeMode);
+      themeBox.querySelectorAll("[data-theme-btn]").forEach(x => x.classList.toggle("active", x === b));
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (!document.startViewTransition || reduce) { applyTheme(themeMode); return; }
-      const t = document.startViewTransition(() => applyTheme(themeMode));
-      t.ready.then(() => {
-        document.documentElement.animate(
-          { clipPath: waveFrames() },
-          { duration: 1300, easing: "linear", pseudoElement: "::view-transition-new(root)" }
-        );
-      }).catch(() => {});
+
+      // 1) Button pulsiert
+      const ring = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+      const pulse = b.animate(
+        [
+          { transform: "scale(1)", boxShadow: `0 0 0 0 ${ring}88` },
+          { transform: "scale(0.82)", offset: 0.3 },
+          { transform: "scale(1.18)", boxShadow: `0 0 0 10px ${ring}00`, offset: 0.7 },
+          { transform: "scale(1)", boxShadow: `0 0 0 0 ${ring}00` }
+        ],
+        { duration: 460, easing: "ease-out" }
+      );
+
+      // 2) danach breitet sich das neue Theme wellenförmig vom Button aus
+      pulse.onfinish = () => {
+        const r = b.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const t = document.startViewTransition(() => applyTheme(themeMode));
+        t.ready.then(() => {
+          document.documentElement.animate(
+            { clipPath: rippleFrames(cx, cy) },
+            { duration: 1500, easing: "linear", pseudoElement: "::view-transition-new(root)" }
+          );
+        }).catch(() => {});
+      };
     });
   });
 
   // Wenn die App aus dem Hintergrund zurückkommt: Datumsanzeige aktualisieren
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { purgeDone(); render(); } });
 
   // Offline-Unterstützung
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    // Wenn eine neue Version installiert wurde: einmal automatisch neu laden
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (hadController && !reloaded) { reloaded = true; location.reload(); }
+    });
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+      .then(reg => {
+        // Beim Zurückkehren in die App nach Updates schauen
+        document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update().catch(() => {}); });
+      })
+      .catch(() => {});
   }
 
+  purgeDone();
   render();
 </script>
 </body>
